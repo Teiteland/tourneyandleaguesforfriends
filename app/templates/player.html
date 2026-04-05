@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.name }} - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ player.name }}</h2>
+    {% if player.is_dummy %}
+        <span class="badge">Dummy Player</span>
+    {% endif %}
+</div>
+
+<section class="player-stats">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">{{ wins }}</div>
+            <div class="stat-label">Wins</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ draws }}</div>
+            <div class="stat-label">Draws</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ losses }}</div>
+            <div class="stat-label">Losses</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ series_won }}</div>
+            <div class="stat-label">Series Won</div>
+        </div>
+        {% if favorite_opponent %}
+        <div class="stat-card highlight">
+            <div class="stat-value">{{ favorite_opponent.name }}</div>
+            <div class="stat-label">Favorite Opponent ({{ favorite_opponent.wins }} wins)</div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{% if revenge_opportunities %}
+<section class="revenge-section">
+    <h3>Revenge Opportunities</h3>
+    <p class="section-desc">Last losses where revenge has not been taken</p>
+    <table class="history-table">
+        <thead>
+            <tr>
+                <th>Opponent</th>
+                <th>Date</th>
+                <th>Score</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for loss in revenge_opportunities %}
+            <tr>
+                <td><a href="/players/{{ loss.opponent_id }}">{{ loss.opponent_name }}</a></td>
+                <td>{{ loss.date.strftime('%Y-%m-%d') if loss.date else '-' }}</td>
+                <td>{{ loss.score }}</td>
+                <td>Not avenged</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+<section class="player-history">
+    <h3>Match History</h3>
+    {% if matches %}
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th>Opponent</th>
+                    <th>Result</th>
+                    <th>Score</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for match in matches %}
+                <tr>
+                    <td>
+                        {% if match.home_player_id == player.id %}
+                            vs <a href="/players/{{ match.away_player_id }}">{{ match.away_player.name }}</a>
+                        {% else %}
+                            vs <a href="/players/{{ match.home_player_id }}">{{ match.home_player.name }}</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if match.home_player_id == player.id %}
+                            {% if match.home_score > match.away_score %}Win{% elif match.home_score == match.away_score %}Draw{% else %}Loss{% endif %}
+                        {% else %}
+                            {% if match.away_score > match.home_score %}Win{% elif match.away_score == match.home_score %}Draw{% else %}Loss{% endif %}
+                        {% endif %}
+                    </td>
+                    <td>{{ match.home_score }} - {{ match.away_score }}</td>
+                    <td>{{ match.played_at.strftime('%Y-%m-%d') if match.played_at else '-' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No matches played yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

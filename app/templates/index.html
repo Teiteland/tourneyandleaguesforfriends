@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Welcome</h2>
+<p>Gaming league and tournament management system</p>
+
+{% if leagues %}
+<h3>Recent Leagues</h3>
+<div class="leagues-list">
+    {% for league in leagues[:3] %}
+    <div class="league-card">
+        <h3><a href="/leagues/{{ league.id }}">{{ league.name }}</a></h3>
+        <p class="league-game">{{ league.game.name if league.game else 'No game' }}</p>
+        <p class="league-status status-{{ league.status }}">{{ league.status }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

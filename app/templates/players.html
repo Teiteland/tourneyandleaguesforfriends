@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Players - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<h2>Players</h2>
+
+{% if players %}
+    <div class="players-list">
+        {% for player in players %}
+            <div class="player-card">
+                <h3><a href="/players/{{ player.id }}">{{ player.name }}</a></h3>
+                {% if player.is_dummy %}
+                    <span class="badge">Dummy Player</span>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No players yet.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Match - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Match Result</h2>
+    <p><a href="/leagues/{{ league.id }}">Back to {{ league.name }}</a></p>
+    
+    <div class="match-display">
+        <div class="match-player">
+            <a href="/players/{{ match.home_player_id }}">{{ match.home_player.name }}</a>
+        </div>
+        <div class="match-vs">vs</div>
+        <div class="match-player">
+            <a href="/players/{{ match.away_player_id }}">{{ match.away_player.name }}</a>
+        </div>
+    </div>
+    
+    <form method="POST" class="result-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="home_score">{{ match.home_player.name }} Score</label>
+                <input type="number" id="home_score" name="home_score" min="0" value="{{ match.home_score or '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="away_score">{{ match.away_player.name }} Score</label>
+                <input type="number" id="away_score" name="away_score" min="0" value="{{ match.away_score or '' }}" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="home_track">Home Track (optional)</label>
+            <input type="text" id="home_track" name="home_track" value="{{ match.home_track or '' }}">
+        </div>
+        <button type="submit" class="btn-primary">Save Result</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{{ league.name }} - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ league.name }}</h2>
+    <p class="league-game">Game: {{ league.game.name if league.game else 'N/A' }}</p>
+    <p class="league-status status-{{ league.status }}">{{ league.status }}</p>
+</div>
+
+<section class="standings-section">
+    <h3>Standings</h3>
+    <table class="standings-table">
+        <thead>
+            <tr>
+                <th>Pos</th>
+                <th>Player</th>
+                <th>Played</th>
+                <th>Won</th>
+                <th>Drawn</th>
+                <th>Lost</th>
+                <th>Points</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in standings %}
+            <tr>
+                <td>{{ s.position }}</td>
+                <td><a href="/players/{{ s.player_id }}">{{ s.name }}</a></td>
+                <td>{{ s.played }}</td>
+                <td>{{ s.won }}</td>
+                <td>{{ s.drawn }}</td>
+                <td>{{ s.lost }}</td>
+                <td><strong>{{ s.points }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+
+<section class="matches-section">
+    <h3>Matches</h3>
+    
+    <div class="round-tabs">
+        {% for round_num in matches_by_round.keys() %}
+        <button class="round-tab" data-round="{{ round_num }}">Round {{ round_num }}</button>
+        {% endfor %}
+    </div>
+    
+    {% for round_num, matches in matches_by_round.items() %}
+    <div class="round-content" id="round-{{ round_num }}">
+        <h4>Round {{ round_num }}</h4>
+        <div class="matches-list">
+            {% for match in matches %}
+            <div class="match-card {% if match.home_score is not none %}played{% endif %}">
+                <div class="match-players">
+                    <span class="home-player">
+                        {% if match.home_player %}
+                        <a href="/players/{{ match.home_player_id }}">{{ match.home_player.name }}</a>
+                        {% else %}
+                        <em>BYE</em>
+                        {% endif %}
+                    </span>
+                    <span class="match-score">
+                        {% if match.home_score is not none %}
+                            {% if match.is_walkover %}
+                            WO
+                            {% else %}
+                            {{ match.home_score }} - {{ match.away_score }}
+                            {% endif %}
+                        {% else %}
+                            vs
+                        {% endif %}
+                    </span>
+                    <span class="away-player">
+                        {% if match.away_player %}
+                        <a href="/players/{{ match.away_player_id }}">{{ match.away_player.name }}</a>
+                        {% else %}
+                        <em>BYE</em>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="match-track">Track: {{ match.home_track or 'TBD' }}</div>
+                {% if match.home_score is none and match.home_player_id and match.away_player_id and session.get('is_admin') %}
+                    <a href="/leagues/{{ league.id }}/match/{{ match.id }}" class="btn-small">Enter Result</a>
+                {% elif match.home_score is not none %}
+                    <span class="match-date">{{ match.played_at.strftime('%Y-%m-%d') if match.played_at else '' }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</section>
+
+{% if session.get('is_admin') and league.status == 'active' %}
+    <div class="admin-actions">
+        <a href="/leagues/{{ league.id }}/end" class="btn-danger" onclick="return confirm('Are you sure you want to end this league?')">End League</a>
+    </div>
+{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tabs = document.querySelectorAll('.round-tab');
+    const contents = document.querySelectorAll('.round-content');
+    
+    function showRound(roundNum) {
+        tabs.forEach(t => t.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+        
+        const tab = document.querySelector(`.round-tab[data-round="${roundNum}"]`);
+        const content = document.getElementById(`round-${roundNum}`);
+        
+        if (tab && content) {
+            tab.classList.add('active');
+            content.classList.add('active');
+        }
+    }
+    
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            showRound(this.dataset.round);
+        });
+    });
+    
+    function checkAutoAdvance() {
+        const activeContent = document.querySelector('.round-content.active');
+        if (!activeContent) {
+            showRound(1);
+            return;
+        }
+        
+        const roundNum = activeContent.id.replace('round-', '');
+        const matches = activeContent.querySelectorAll('.match-card');
+        let allPlayed = true;
+        
+        matches.forEach(m => {
+            if (!m.classList.contains('played')) {
+                allPlayed = false;
+            }
+        });
+        
+        if (allPlayed && matches.length > 0) {
+            const nextRound = parseInt(roundNum) + 1;
+            const nextContent = document.getElementById(`round-${nextRound}`);
+            if (nextContent) {
+                showRound(nextRound);
+            }
+        }
+    }
+    
+    showRound(1);
+    checkAutoAdvance();
+});
+</script>
+{% endblock %}
