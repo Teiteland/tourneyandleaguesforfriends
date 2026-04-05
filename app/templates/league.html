@@ -57,7 +57,7 @@
                 <div class="match-players">
                     <span class="home-player">
                         {% if match.home_player %}
-                        <a href="/players/{{ match.home_player_id }}">{{ match.home_player.name }}</a>
+                        <a href="/players/{{ match.home_player_id }}" class="home-link">{{ match.home_player.name }}</a>
                         {% else %}
                         <em>BYE</em>
                         {% endif %}
@@ -66,23 +66,25 @@
                         {% if match.home_score is not none %}
                             {% if match.is_walkover %}
                             WO
+                            {% elif session.get('is_admin') and league.status == 'active' %}
+                            <a href="/leagues/{{ league.id }}/match/{{ match.id }}">{{ match.home_score }} - {{ match.away_score }}</a>
                             {% else %}
                             {{ match.home_score }} - {{ match.away_score }}
                             {% endif %}
                         {% else %}
-                            vs
+                        vs
                         {% endif %}
                     </span>
                     <span class="away-player">
                         {% if match.away_player %}
-                        <a href="/players/{{ match.away_player_id }}">{{ match.away_player.name }}</a>
+                        <a href="/players/{{ match.away_player_id }}" class="away-link">{{ match.away_player.name }}</a>
                         {% else %}
                         <em>BYE</em>
                         {% endif %}
                     </span>
                 </div>
                 <div class="match-track">Track: {{ match.home_track or 'TBD' }}</div>
-                {% if match.home_score is none and match.home_player_id and match.away_player_id and session.get('is_admin') %}
+                {% if match.home_score is none and match.home_player_id and match.away_player_id and session.get('is_admin') and league.status == 'active' %}
                     <a href="/leagues/{{ league.id }}/match/{{ match.id }}" class="btn-small">Enter Result</a>
                 {% elif match.home_score is not none %}
                     <span class="match-date">{{ match.played_at.strftime('%Y-%m-%d') if match.played_at else '' }}</span>

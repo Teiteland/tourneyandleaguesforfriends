@@ -102,20 +102,24 @@ def end_league(league_id):
 def match(league_id, match_id):
     league = League.query.get_or_404(league_id)
     match = Match.query.get_or_404(match_id)
+    is_completed = league.status == 'completed'
     
     if request.method == 'POST':
-        home_score = request.form.get('home_score')
-        away_score = request.form.get('away_score')
-        
-        if home_score is not None and away_score is not None:
-            match.home_score = int(home_score)
-            match.away_score = int(away_score)
-            match.is_draw = match.home_score == match.away_score
-            match.played_at = datetime.utcnow()
-            db.session.commit()
-            flash('Match result saved!', 'success')
+        if is_completed:
+            flash('Cannot change result. This league is completed.', 'error')
+        else:
+            home_score = request.form.get('home_score')
+            away_score = request.form.get('away_score')
+            
+            if home_score is not None and away_score is not None:
+                match.home_score = int(home_score)
+                match.away_score = int(away_score)
+                match.is_draw = match.home_score == match.away_score
+                match.played_at = datetime.utcnow()
+                db.session.commit()
+                flash('Match result saved!', 'success')
     
-    return render_template('match.html', league=league, match=match)
+    return render_template('match.html', league=league, match=match, is_completed=is_completed)
 
 @main.route('/players')
 def players():

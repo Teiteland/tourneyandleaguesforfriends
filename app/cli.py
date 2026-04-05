@@ -65,45 +65,106 @@ def seed_data():
     
     player_ids = [p.id for p in players[:4]]
     
+    # Round 1: Mario vs Luigi (both home & away), Peach vs Daisy (both home & away)
     round1 = LeagueRound(league_id=league.id, round_number=1)
     db.session.add(round1)
     db.session.flush()
     
-    Match(league_id=league.id, round_id=round1.id,
+    # Mario (home) vs Luigi
+    match1 = Match(league_id=league.id, round_id=round1.id,
           home_player_id=player_ids[0], away_player_id=player_ids[1],
           home_score=3, away_score=1, is_draw=False,
           played_at=datetime(2024, 1, 1), home_track='Rainbow Road')
-    Match(league_id=league.id, round_id=round1.id,
+    db.session.add(match1)
+    
+    # Luigi (home) vs Mario
+    match2 = Match(league_id=league.id, round_id=round1.id,
+          home_player_id=player_ids[1], away_player_id=player_ids[0],
+          home_score=0, away_score=2, is_draw=False,
+          played_at=datetime(2024, 1, 1), home_track='Toad Harbor')
+    db.session.add(match2)
+    
+    # Peach (home) vs Daisy
+    match3 = Match(league_id=league.id, round_id=round1.id,
           home_player_id=player_ids[2], away_player_id=player_ids[3],
           home_score=2, away_score=2, is_draw=True,
           played_at=datetime(2024, 1, 1), home_track='Mario Circuit')
+    db.session.add(match3)
     
+    # Daisy (home) vs Peach
+    match4 = Match(league_id=league.id, round_id=round1.id,
+          home_player_id=player_ids[3], away_player_id=player_ids[2],
+          home_score=1, away_score=3, is_draw=False,
+          played_at=datetime(2024, 1, 1), home_track='Mountin')
+    db.session.add(match4)
+    
+    # Round 2: Mario vs Peach, Luigi vs Daisy + reverses
     round2 = LeagueRound(league_id=league.id, round_number=2)
     db.session.add(round2)
     db.session.flush()
     
-    Match(league_id=league.id, round_id=round2.id,
-          home_player_id=player_ids[1], away_player_id=player_ids[0],
-          home_score=0, away_score=2, is_draw=False,
-          played_at=datetime(2024, 1, 8), home_track='Toad Harbor')
-    Match(league_id=league.id, round_id=round2.id,
-          home_player_id=player_ids[3], away_player_id=player_ids[2],
-          home_score=1, away_score=3, is_draw=False,
-          played_at=datetime(2024, 1, 8), home_track='Mountain')
+    # Mario (home) vs Peach
+    match5 = Match(league_id=league.id, round_id=round2.id,
+          home_player_id=player_ids[0], away_player_id=player_ids[2],
+          home_score=4, away_score=0, is_draw=False,
+          played_at=datetime(2024, 1, 8), home_track='Electrodrome')
+    db.session.add(match5)
     
+    # Peach (home) vs Mario
+    match6 = Match(league_id=league.id, round_id=round2.id,
+          home_player_id=player_ids[2], away_player_id=player_ids[0],
+          home_score=1, away_score=2, is_draw=False,
+          played_at=datetime(2024, 1, 8), home_track='SherbetLand')
+    db.session.add(match6)
+    
+    # Luigi (home) vs Daisy
+    match7 = Match(league_id=league.id, round_id=round2.id,
+          home_player_id=player_ids[1], away_player_id=player_ids[3],
+          home_score=2, away_score=1, is_draw=False,
+          played_at=datetime(2024, 1, 8), home_track='Toad Harbor')
+    db.session.add(match7)
+    
+    # Daisy (home) vs Luigi
+    match8 = Match(league_id=league.id, round_id=round2.id,
+          home_player_id=player_ids[3], away_player_id=player_ids[1],
+          home_score=0, away_score=3, is_draw=False,
+          played_at=datetime(2024, 1, 8), home_track='Mountin')
+    db.session.add(match8)
+    
+    # Round 3: Mario vs Daisy, Luigi vs Peach + reverses
     round3 = LeagueRound(league_id=league.id, round_number=3)
     db.session.add(round3)
     db.session.flush()
     
-    Match(league_id=league.id, round_id=round3.id,
-          home_player_id=player_ids[0], away_player_id=player_ids[2],
-          home_score=4, away_score=0, is_draw=False,
-          played_at=datetime(2024, 1, 15), home_track='Electrodrome')
-    Match(league_id=league.id, round_id=round3.id,
-          home_player_id=player_ids[1], away_player_id=player_ids[3],
-          home_score=2, away_score=1, is_draw=False,
-          played_at=datetime(2024, 1, 15), home_track='SherbetLand')
+    # Mario (home) vs Daisy
+    match9 = Match(league_id=league.id, round_id=round3.id,
+          home_player_id=player_ids[0], away_player_id=player_ids[3],
+          home_score=5, away_score=2, is_draw=False,
+          played_at=datetime(2024, 1, 15), home_track='Rainbow Road')
+    db.session.add(match9)
     
+    # Daisy (home) vs Mario
+    match10 = Match(league_id=league.id, round_id=round3.id,
+          home_player_id=player_ids[3], away_player_id=player_ids[0],
+          home_score=1, away_score=4, is_draw=False,
+          played_at=datetime(2024, 1, 15), home_track='Mountin')
+    db.session.add(match10)
+    
+    # Luigi (home) vs Peach
+    match11 = Match(league_id=league.id, round_id=round3.id,
+          home_player_id=player_ids[1], away_player_id=player_ids[2],
+          home_score=3, away_score=3, is_draw=True,
+          played_at=datetime(2024, 1, 15), home_track='Toad Harbor')
+    db.session.add(match11)
+    
+    # Peach (home) vs Luigi
+    match12 = Match(league_id=league.id, round_id=round3.id,
+          home_player_id=player_ids[2], away_player_id=player_ids[1],
+          home_score=2, away_score=2, is_draw=True,
+          played_at=datetime(2024, 1, 15), home_track='Mario Circuit')
+    db.session.add(match12)
+    
+    # Season 2 (completed)
     league2 = League(name='Test League - Season 2', game_id=game.id, status='completed')
     db.session.add(league2)
     db.session.flush()
@@ -112,27 +173,52 @@ def seed_data():
     db.session.add(r1)
     db.session.flush()
     
-    Match(league_id=league2.id, round_id=r1.id,
-          home_player_id=player_ids[0], away_player_id=player_ids[1],
-          home_score=5, away_score=2, is_draw=False,
-          played_at=datetime(2024, 2, 1), home_track='Rainbow Road')
-    Match(league_id=league2.id, round_id=r1.id,
-          home_player_id=player_ids[2], away_player_id=player_ids[3],
-          home_score=1, away_score=4, is_draw=False,
-          played_at=datetime(2024, 2, 1), home_track='Mario Circuit')
+    # Same structure as Season 1, different results
+    db.session.add(Match(
+        league_id=league2.id, round_id=r1.id,
+        home_player_id=player_ids[0], away_player_id=player_ids[1],
+        home_score=5, away_score=2, is_draw=False,
+        played_at=datetime(2024, 2, 1), home_track='Rainbow Road'))
+    db.session.add(Match(
+        league_id=league2.id, round_id=r1.id,
+        home_player_id=player_ids[1], away_player_id=player_ids[0],
+        home_score=1, away_score=4, is_draw=False,
+        played_at=datetime(2024, 2, 1), home_track='Toad Harbor'))
+    db.session.add(Match(
+        league_id=league2.id, round_id=r1.id,
+        home_player_id=player_ids[2], away_player_id=player_ids[3],
+        home_score=0, away_score=3, is_draw=False,
+        played_at=datetime(2024, 2, 1), home_track='Mario Circuit'))
+    db.session.add(Match(
+        league_id=league2.id, round_id=r1.id,
+        home_player_id=player_ids[3], away_player_id=player_ids[2],
+        home_score=2, away_score=1, is_draw=False,
+        played_at=datetime(2024, 2, 1), home_track='Mountin'))
     
     r2 = LeagueRound(league_id=league2.id, round_number=2)
     db.session.add(r2)
     db.session.flush()
     
-    Match(league_id=league2.id, round_id=r2.id,
-          home_player_id=player_ids[1], away_player_id=player_ids[2],
-          home_score=0, away_score=3, is_draw=False,
-          played_at=datetime(2024, 2, 8), home_track='Toad Harbor')
-    Match(league_id=league2.id, round_id=r2.id,
-          home_player_id=player_ids[3], away_player_id=player_ids[0],
-          home_score=2, away_score=1, is_draw=False,
-          played_at=datetime(2024, 2, 8), home_track='Mountain')
+    db.session.add(Match(
+        league_id=league2.id, round_id=r2.id,
+        home_player_id=player_ids[0], away_player_id=player_ids[2],
+        home_score=3, away_score=1, is_draw=False,
+        played_at=datetime(2024, 2, 8), home_track='Electrodrome'))
+    db.session.add(Match(
+        league_id=league2.id, round_id=r2.id,
+        home_player_id=player_ids[2], away_player_id=player_ids[0],
+        home_score=0, away_score=2, is_draw=False,
+        played_at=datetime(2024, 2, 8), home_track='SherbetLand'))
+    db.session.add(Match(
+        league_id=league2.id, round_id=r2.id,
+        home_player_id=player_ids[1], away_player_id=player_ids[3],
+        home_score=4, away_score=0, is_draw=False,
+        played_at=datetime(2024, 2, 8), home_track='Toad Harbor'))
+    db.session.add(Match(
+        league_id=league2.id, round_id=r2.id,
+        home_player_id=player_ids[3], away_player_id=player_ids[1],
+        home_score=1, away_score=5, is_draw=False,
+        played_at=datetime(2024, 2, 8), home_track='Mountin'))
     
     db.session.commit()
-    click.echo('Seed data created with more comprehensive test matches.')
+    click.echo('Seed data created with round-robin structure (home + away in same round).')

@@ -18,7 +18,8 @@
 ## Theme
 
 - **Default:** Dark mode
-- **Toggle:** Light mode available
+- **Toggle:** Light mode and Earth mode available
+- **Earth theme:** Warm whisky/brown color palette
 - **CSS:** Plain CSS (no preprocessor)
 
 ## Project Structure
@@ -41,15 +42,17 @@
 
 1. **League/Serie Mode**
    - Round-robin format: all players play each other twice (home + away)
+   - Home and away matches grouped in the same round
    - Configurable number of players (start: 12, max: 64)
    - Multiple parallel leagues/seasons
    - Admin can end league manually even if not all matches played
+   - Admin can edit match results while league is active
    - Points system: 3 for win, 1 for draw, 0 for loss
 
 2. **Match Scheduling**
    - Home player selects track (dropdown or manual entry)
-   - Two legs per matchup: home and away
-   - Manual result entry
+   - Two legs per matchup: home and away (in same round)
+   - Manual result entry with confirmation dialog
 
 3. **Player Management**
    - 12 auto-generated dummy players from Mario Kart universe on initialization
@@ -181,7 +184,7 @@
 pip install -r requirements.txt
 
 # Run tests
-pytest
+PYTHONPATH=. pytest
 
 # Start development server
 flask run

@@ -1,21 +1,41 @@
 :root {
     --bg-color: #121212;
     --surface-color: #1e1e1e;
-    --primary-color: #64b5f6;
+    --primary-color: #90caf9;
     --secondary-color: #03dac6;
     --text-color: #ffffff;
-    --text-secondary: #b0b0b0;
+    --text-secondary: #d0d0d0;
+    --border-color: #444444;
     --error-color: #cf6679;
     --success-color: #4caf50;
+    --home-color: #4caf50;
+    --away-color: #ff7043;
 }
 
 [data-theme="light"] {
     --bg-color: #f5f5f5;
     --surface-color: #ffffff;
-    --primary-color: #1976d2;
+    --primary-color: #1565c0;
     --secondary-color: #018786;
     --text-color: #121212;
     --text-secondary: #666666;
+    --border-color: #cccccc;
+    --home-color: #2e7d32;
+    --away-color: #e64a19;
+}
+
+[data-theme="earth"] {
+    --bg-color: #2c1810;
+    --surface-color: #4a3728;
+    --primary-color: #e8dcc8;
+    --secondary-color: #b87333;
+    --text-color: #f5f0e6;
+    --text-secondary: #c9b896;
+    --border-color: #5c4333;
+    --error-color: #c45c4a;
+    --success-color: #7d9c5a;
+    --home-color: #7d9c5a;
+    --away-color: #c45c4a;
 }
 
 body {
@@ -27,6 +47,15 @@ body {
     display: flex;
     flex-direction: column;
     transition: background-color 0.3s, color 0.3s;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    opacity: 0.8;
 }
 
 header {
@@ -311,7 +340,7 @@ footer {
 .standings-table td {
     padding: 1rem;
     text-align: center;
-    border-bottom: 1px solid var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .standings-table th {
@@ -356,9 +385,28 @@ footer {
     gap: 1rem;
 }
 
+.home-link {
+    color: var(--home-color) !important;
+    font-weight: 600;
+}
+
+.away-link {
+    color: var(--away-color) !important;
+    font-weight: 600;
+}
+
 .match-score {
     font-weight: bold;
     font-size: 1.1rem;
+}
+
+.match-score a {
+    color: var(--text-color);
+    text-decoration: underline;
+}
+
+.match-score a:hover {
+    color: var(--primary-color);
 }
 
 .match-track {
@@ -441,7 +489,7 @@ footer {
 .history-table td {
     padding: 1rem;
     text-align: left;
-    border-bottom: 1px solid var(--text-secondary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .history-table th {
@@ -517,4 +565,82 @@ footer {
 
 .round-content.active {
     display: block;
+}
+
+/* Earth theme specific overrides */
+[data-theme="earth"] .round-tab {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    border-color: var(--primary-color);
+}
+
+[data-theme="earth"] .round-tab:hover {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+}
+
+[data-theme="earth"] .round-tab.active {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+}
+
+[data-theme="earth"] .btn-small {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+}
+
+[data-theme="earth"] .btn-small:hover {
+    opacity: 0.9;
+}
+
+[data-theme="earth"] .standings-table th {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+}
+
+[data-theme="earth"] .history-table th {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+}
+
+/* Earth theme - Buttons and form elements */
+[data-theme="earth"] .btn-primary {
+    background-color: var(--primary-color);
+    color: var(--bg-color);
+}
+
+[data-theme="earth"] .btn-primary:hover {
+    opacity: 0.9;
+}
+
+[data-theme="earth"] .btn-secondary {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--primary-color);
+}
+
+[data-theme="earth"] .btn-secondary:hover {
+    opacity: 0.9;
+}
+
+[data-theme="earth"] .btn-danger {
+    background-color: var(--error-color);
+    color: var(--text-color);
+}
+
+[data-theme="earth"] .form-group input,
+[data-theme="earth"] .form-group select {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="earth"] .form-group label {
+    color: var(--text-secondary);
+}
+
+[data-theme="earth"] .theme-selector select {
+    background-color: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
 }

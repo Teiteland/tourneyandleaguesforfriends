@@ -2,20 +2,34 @@
 
 A gaming league and tournament management system for competitive gaming.
 
+## Quick Start
+
+```bash
+# Clone and setup in one command
+./setup.sh
+
+# Start the server
+flask run
+```
+
+The application will be available at `http://127.0.0.1:5000`
+
 ## Features
 
 ### Current Features (Phase 1)
 
-- **League/Serie System** - Round-robin format where all players play each other twice (home + away)
+- **League/Serie System** - Round-robin format where all players play each other twice (home + away) in the same round
 - **Multiple Parallel Leagues** - Create and manage multiple active leagues simultaneously
 - **Manual League End** - Admin can end a league manually even if not all matches are played
+- **Edit Match Results** - Admin can edit results while league is active (click on result to edit)
 - **Points System** - 3 points for win, 1 point for draw, 0 points for loss
 - **Match Scheduling** - Home player selects track (dropdown or manual entry)
 - **History Tracking** - View history per player, tournament, league round, and overall league
 - **Player Statistics** - Wins, Draws, Losses, Goals For/Against, Series Won, Favorite Opponent, Revenge Opportunities
-- **Dark Mode** - Default dark mode with light mode toggle available
+- **Themes** - Dark mode (default), Light mode, and Earth mode (whisky/brown colors)
 - **Mock Login** - Simple login for testing purposes (admin@example.com / admin123)
 - **Unit Tests** - Comprehensive test suite with pytest
+- **Setup Script** - `./setup.sh` to initialize database and seed test data
 
 ### Upcoming Features (Phase 2+)
 
@@ -51,9 +65,12 @@ A gaming league and tournament management system for competitive gaming.
 
 ## Testing
 
-Run the test suite with pytest:
 ```bash
-pytest
+# Run all tests
+PYTHONPATH=. pytest
+
+# Run specific test file
+PYTHONPATH=. pytest tests/test_player_stats.py
 ```
 
 ## Usage
