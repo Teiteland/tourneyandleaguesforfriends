@@ -35,6 +35,8 @@ class LeagueRound(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'))
     round_number = db.Column(db.Integer, nullable=False)
+    is_active = db.Column(db.Boolean, default=False)
+    is_completed = db.Column(db.Boolean, default=False)
     league = db.relationship('League', backref='rounds')
 
 class Match(db.Model):
@@ -50,6 +52,8 @@ class Match(db.Model):
     is_draw = db.Column(db.Boolean, default=False)
     is_walkover = db.Column(db.Boolean, default=False)
     played_at = db.Column(db.DateTime, nullable=True)
+    status = db.Column(db.String(20), default='scheduled')  # scheduled, played, walkover, cancelled
+    walkover_winner = db.Column(db.Integer, nullable=True)  # 1 for home, 2 for away
     league = db.relationship('League', backref='matches')
     round = db.relationship('LeagueRound', backref='matches')
     home_player = db.relationship('Player', foreign_keys=[home_player_id])

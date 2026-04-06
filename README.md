@@ -22,6 +22,11 @@ The application will be available at `http://127.0.0.1:5000`
 - **Multiple Parallel Leagues** - Create and manage multiple active leagues simultaneously
 - **Manual League End** - Admin can end a league manually even if not all matches are played
 - **Edit Match Results** - Admin can edit results while league is active (click on result to edit)
+- **Round Activation** - Rounds can be locked, active, or completed
+- **Automatic Round Progression** - Next round activates automatically when all active rounds are completed
+- **Manual Round Control** - Admin can manually activate or complete rounds
+- **Walkover** - Admin can set walkover (3-0) by selecting winner
+- **Cancel Match** - Admin can cancel matches (excluded from statistics but kept in log)
 - **Points System** - 3 points for win, 1 point for draw, 0 points for loss
 - **Match Scheduling** - Home player selects track (dropdown or manual entry)
 - **History Tracking** - View history per player, tournament, league round, and overall league

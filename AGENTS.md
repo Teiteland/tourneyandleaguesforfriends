@@ -53,6 +53,10 @@
    - Home player selects track (dropdown or manual entry)
    - Two legs per matchup: home and away (in same round)
    - Manual result entry with confirmation dialog
+   - Round-based activation: rounds can be locked, active, or completed
+   - Manual or automatic round progression
+   - Walkover: admin manually selects winner (3-0 default)
+   - Cancel match: removes from statistics but keeps in log
 
 3. **Player Management**
    - 12 auto-generated dummy players from Mario Kart universe on initialization

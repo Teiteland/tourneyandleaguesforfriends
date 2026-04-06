@@ -6,6 +6,11 @@
 <div class="form-container">
     <h2>Match Result</h2>
     <p><a href="/leagues/{{ league.id }}">Back to {{ league.name }}</a></p>
+    <p><strong>Round:</strong> {{ match.round.round_number }} {% if round_completed %}(Completed){% elif match.round.is_active %}(Active){% else %}(Locked){% endif %}</p>
+    
+    {% if match.status == 'cancelled' %}
+    <div class="alert alert-error">This match has been CANCELLED and will not count in statistics.</div>
+    {% endif %}
     
     <div class="match-display">
         <div class="match-player">
@@ -17,35 +22,63 @@
         </div>
     </div>
     
-    {% if match.home_score is not none %}
+    {% if match.home_score is not none and match.status != 'cancelled' %}
     <div class="match-score-display" style="text-align: center; margin-bottom: 2rem; font-size: 1.5rem;">
         <strong>{{ match.home_score }} - {{ match.away_score }}</strong>
         {% if match.is_draw %} (Draw){% endif %}
+        {% if match.is_walkover %} (Walkover){% endif %}
     </div>
     {% endif %}
     
     {% if is_completed %}
-    <div class="alert alert-error">This league is completed. Results cannot be changed.</div>
+    <div class="alert alert-error">This round is completed. Results cannot be changed.</div>
     {% endif %}
     
-    <form method="POST" class="result-form" {% if is_completed %}disabled{% endif %}>
+    {% if not is_completed and match.status != 'cancelled' %}
+    <form method="POST" class="result-form">
         <div class="form-row">
             <div class="form-group">
                 <label for="home_score">{{ match.home_player.name }} Score</label>
-                <input type="number" id="home_score" name="home_score" min="0" value="{{ match.home_score or '' }}" {% if is_completed %}disabled{% endif %} required>
+                <input type="number" id="home_score" name="home_score" min="0" value="{{ match.home_score or '' }}" required>
             </div>
             <div class="form-group">
                 <label for="away_score">{{ match.away_player.name }} Score</label>
-                <input type="number" id="away_score" name="away_score" min="0" value="{{ match.away_score or '' }}" {% if is_completed %}disabled{% endif %} required>
+                <input type="number" id="away_score" name="away_score" min="0" value="{{ match.away_score or '' }}" required>
             </div>
         </div>
         <div class="form-group">
             <label for="home_track">Home Track (optional)</label>
-            <input type="text" id="home_track" name="home_track" value="{{ match.home_track or '' }}" {% if is_completed %}disabled{% endif %}>
+            <input type="text" id="home_track" name="home_track" value="{{ match.home_track or '' }}">
         </div>
-        {% if not is_completed %}
-        <button type="submit" class="btn-primary" onclick="return confirm('Are you sure you want to save this result?')">Save Result</button>
-        {% endif %}
+        <button type="submit" name="action" value="save" class="btn-primary" onclick="return confirm('Are you sure you want to save this result?')">Save Result</button>
     </form>
+    
+    <div class="match-options" style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <h4>Special Options</h4>
+        
+        <div class="walkover-section" style="margin-bottom: 1rem;">
+            <p><strong>Walkover:</strong> Admin manually selects the winner.</p>
+            <form method="POST" style="display: inline;">
+                <input type="hidden" name="action" value="walkover">
+                <button type="submit" name="walkover_winner" value="1" class="btn-secondary" onclick="return confirm('Set walkover - {{ match.home_player.name }} wins 3-0?')">{{ match.home_player.name }} Wins (3-0)</button>
+                <button type="submit" name="walkover_winner" value="2" class="btn-secondary" onclick="return confirm('Set walkover - {{ match.away_player.name }} wins 3-0?')">{{ match.away_player.name }} Wins (0-3)</button>
+            </form>
+        </div>
+        
+        <div class="cancel-section">
+            <p><strong>Cancel Match:</strong> Remove this match entirely (will not count in statistics).</p>
+            <form method="POST" style="display: inline;">
+                <input type="hidden" name="action" value="cancel">
+                <button type="submit" class="btn-danger" onclick="return confirm('Are you sure you want to CANCEL this match? It will be marked as cancelled and will not count in any statistics.')">Cancel Match</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if match.status == 'cancelled' %}
+    <div class="match-options" style="margin-top: 2rem;">
+        <p><em>This match was cancelled.</em></p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

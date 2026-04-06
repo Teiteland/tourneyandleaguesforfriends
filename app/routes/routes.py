@@ -85,6 +85,102 @@ def league(league_id):
     return render_template('league.html', league=league, rounds=rounds, 
                            matches_by_round=matches_by_round, standings=standings)
 
+@main.route('/leagues/<int:league_id>/round/<int:round_number>/activate')
+def activate_round(league_id, round_number):
+    if not session.get('is_admin'):
+        flash('Admin access required', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    league = League.query.get_or_404(league_id)
+    
+    round_obj = LeagueRound.query.filter_by(
+        league_id=league_id, 
+        round_number=round_number
+    ).first_or_404()
+    
+    if round_obj.is_active:
+        flash('Round is already active', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    if round_obj.is_completed:
+        flash('Cannot activate a completed round', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    # Check if previous rounds are all completed before activating
+    previous_rounds = LeagueRound.query.filter(
+        LeagueRound.league_id == league_id,
+        LeagueRound.round_number < round_number
+    ).all()
+    
+    for pr in previous_rounds:
+        if not pr.is_completed:
+            flash(f'Round {pr.round_number} must be completed before activating round {round_number}', 'error')
+            return redirect(url_for('main.league', league_id=league_id))
+    
+    round_obj.is_active = True
+    db.session.commit()
+    flash(f'Round {round_number} is now active', 'success')
+    return redirect(url_for('main.league', league_id=league_id))
+
+@main.route('/leagues/<int:league_id>/round/<int:round_number>/complete')
+def complete_round(league_id, round_number):
+    if not session.get('is_admin'):
+        flash('Admin access required', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    league = League.query.get_or_404(league_id)
+    
+    round_obj = LeagueRound.query.filter_by(
+        league_id=league_id, 
+        round_number=round_number
+    ).first_or_404()
+    
+    if not round_obj.is_active:
+        flash('Round is not active', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    if round_obj.is_completed:
+        flash('Round is already completed', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    round_obj.is_completed = True
+    db.session.commit()
+    
+    # Auto-activate next round if ALL active rounds are completed
+    _auto_activate_next_round(league_id)
+    
+    flash(f'Round {round_number} is now completed', 'success')
+    return redirect(url_for('main.league', league_id=league_id))
+
+def _auto_activate_next_round(league_id):
+    """Auto-activate next round when all active rounds are completed."""
+    # Check if there are any active but not completed rounds
+    active_rounds = LeagueRound.query.filter_by(
+        league_id=league_id,
+        is_active=True,
+        is_completed=False
+    ).all()
+    
+    if active_rounds:
+        return  # There are still active rounds, don't activate next
+    
+    # All active rounds are completed - find next round to activate
+    last_completed = LeagueRound.query.filter_by(
+        league_id=league_id,
+        is_completed=True
+    ).order_by(LeagueRound.round_number.desc()).first()
+    
+    if last_completed:
+        next_round_num = last_completed.round_number + 1
+        next_round = LeagueRound.query.filter_by(
+            league_id=league_id,
+            round_number=next_round_num
+        ).first()
+        
+        if next_round and not next_round.is_active:
+            next_round.is_active = True
+            db.session.commit()
+
 @main.route('/leagues/<int:league_id>/end')
 def end_league(league_id):
     if not session.get('is_admin'):
@@ -102,24 +198,54 @@ def end_league(league_id):
 def match(league_id, match_id):
     league = League.query.get_or_404(league_id)
     match = Match.query.get_or_404(match_id)
-    is_completed = league.status == 'completed'
+    league_completed = league.status == 'completed'
+    round_completed = match.round.is_completed if match.round else False
+    is_completed = league_completed or round_completed
     
     if request.method == 'POST':
         if is_completed:
-            flash('Cannot change result. This league is completed.', 'error')
+            flash('Cannot change result. This round or league is completed.', 'error')
         else:
-            home_score = request.form.get('home_score')
-            away_score = request.form.get('away_score')
+            action = request.form.get('action')
             
-            if home_score is not None and away_score is not None:
-                match.home_score = int(home_score)
-                match.away_score = int(away_score)
-                match.is_draw = match.home_score == match.away_score
+            if action == 'cancel':
+                match.status = 'cancelled'
+                match.home_score = None
+                match.away_score = None
+                match.is_draw = False
+                db.session.commit()
+                flash('Match has been cancelled', 'success')
+            
+            elif action == 'walkover':
+                winner = request.form.get('walkover_winner')
+                if winner == '1':
+                    match.home_score = 3
+                    match.away_score = 0
+                else:
+                    match.home_score = 0
+                    match.away_score = 3
+                match.is_walkover = True
+                match.walkover_winner = int(winner)
+                match.status = 'walkover'
                 match.played_at = datetime.utcnow()
                 db.session.commit()
-                flash('Match result saved!', 'success')
+                flash('Walkover result saved!', 'success')
+            
+            else:
+                home_score = request.form.get('home_score')
+                away_score = request.form.get('away_score')
+                
+                if home_score is not None and away_score is not None:
+                    match.home_score = int(home_score)
+                    match.away_score = int(away_score)
+                    match.is_draw = match.home_score == match.away_score
+                    match.status = 'played'
+                    match.played_at = datetime.utcnow()
+                    db.session.commit()
+                    flash('Match result saved!', 'success')
     
-    return render_template('match.html', league=league, match=match, is_completed=is_completed)
+    return render_template('match.html', league=league, match=match, 
+                           is_completed=is_completed, round_completed=round_completed)
 
 @main.route('/players')
 def players():

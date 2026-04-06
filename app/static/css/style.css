@@ -282,6 +282,62 @@ footer {
     background-color: var(--error-color);
 }
 
+.status-locked {
+    background-color: var(--text-secondary);
+    color: var(--bg-color);
+}
+
+/* Round status badges */
+.round-status-badge {
+    margin-left: 0.5rem;
+    font-size: 0.75rem;
+}
+
+.round-status-badge.completed {
+    color: var(--success-color);
+}
+
+.round-status-badge.active {
+    color: var(--success-color);
+}
+
+.round-status-badge.locked {
+    color: var(--text-secondary);
+}
+
+/* Match card styles */
+.match-card.walkover {
+    border-left: 4px solid var(--primary-color);
+}
+
+.match-card.cancelled {
+    opacity: 0.6;
+}
+
+.match-card.cancelled .match-players {
+    text-decoration: line-through;
+}
+
+.match-cancelled-banner {
+    background-color: var(--error-color);
+    color: white;
+    text-align: center;
+    padding: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+}
+
+/* Round actions */
+.round-actions {
+    margin-bottom: 1rem;
+}
+
+.round-actions .btn-small {
+    margin-right: 0.5rem;
+}
+
 .players-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
