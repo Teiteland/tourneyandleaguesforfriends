@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Register - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Register</h2>
+    <p>Create a new account to track your gaming statistics.</p>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" value="{{ username or '' }}" required minlength="3">
+        </div>
+        
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{ email or '' }}" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required minlength="8" placeholder="At least 8 characters with letters and numbers">
+        </div>
+        
+        <div class="form-group">
+            <label for="confirm_password">Confirm Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+        
+        <button type="submit" class="btn-primary">Register</button>
+    </form>
+    
+    <p class="demo-info">Already have an account? <a href="/login">Log in</a></p>
+</div>
+{% endblock %}

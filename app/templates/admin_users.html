@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>User Management</h2>
+</div>
+
+<section class="users-section">
+    <table class="history-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Failed Attempts</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{% if user.is_admin %}<span class="badge">Admin</span>{% else %}User{% endif %}</td>
+                <td>
+                    {% if user.is_locked %}
+                    <span class="badge" style="background-color: var(--error-color);">🔒 Locked</span>
+                    {% else %}
+                    <span class="badge" style="background-color: var(--success-color);">Active</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.failed_login_attempts }} / 5</td>
+                <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</td>
+                <td>
+                    {% if user.is_locked %}
+                    <a href="/admin/unlock/{{ user.id }}" class="btn-small">Unlock</a>
+                    {% endif %}
+                    <form method="POST" action="/admin/reset-password/{{ user.id }}" style="display: inline;">
+                        <input type="password" name="new_password" placeholder="New password" required minlength="8" style="width: 120px;">
+                        <input type="password" name="confirm_password" placeholder="Confirm" required style="width: 120px;">
+                        <button type="submit" class="btn-small">Reset</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endblock %}

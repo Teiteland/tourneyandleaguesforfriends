@@ -10,6 +10,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    is_locked = db.Column(db.Boolean, default=False)
 
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)

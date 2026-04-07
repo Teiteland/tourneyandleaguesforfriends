@@ -76,9 +76,15 @@
    - Per league round history
    - Per league history (all rounds for all players)
 
-6. **Mock Authentication**
-   - Simple login for testing purposes
-   - No email verification in Phase 1
+6. **User Authentication**
+   - User registration with email and password
+   - Password validation (8+ characters, letters and numbers)
+   - Login with email and password
+   - Account lockout after 5 failed login attempts
+   - Admin can unlock locked accounts
+   - Admin can reset user passwords
+   - Users can change their own password
+   - Admin account created via init-db
 
 ### Database Schema
 
@@ -91,6 +97,8 @@
 | password_hash | TEXT | Hashed password |
 | is_admin | BOOLEAN | Admin privileges |
 | created_at | DATETIME | Creation timestamp |
+| failed_login_attempts | INTEGER | Failed login attempts |
+| is_locked | BOOLEAN | Account locked status |
 
 #### Games Table
 | Column | Type | Description |

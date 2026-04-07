@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>My Profile</h2>
+    
+    <div class="profile-info">
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Account Type:</strong> {% if user.is_admin %}Admin{% else %}User{% endif %}</p>
+        <p><strong>Status:</strong> {% if user.is_locked %}🔒 Locked{% else %}Active{% endif %}</p>
+        <p><strong>Created:</strong> {{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</p>
+    </div>
+    
+    <hr>
+    
+    <h3>Change Password</h3>
+    <form method="POST">
+        <div class="form-group">
+            <label for="current_password">Current Password</label>
+            <input type="password" id="current_password" name="current_password" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="new_password">New Password</label>
+            <input type="password" id="new_password" name="new_password" required minlength="8" placeholder="At least 8 characters with letters and numbers">
+        </div>
+        
+        <div class="form-group">
+            <label for="confirm_password">Confirm New Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+        
+        <button type="submit" class="btn-primary">Change Password</button>
+    </form>
+</div>
+{% endblock %}

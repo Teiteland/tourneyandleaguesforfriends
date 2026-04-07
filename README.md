@@ -32,13 +32,15 @@ The application will be available at `http://127.0.0.1:5000`
 - **History Tracking** - View history per player, tournament, league round, and overall league
 - **Player Statistics** - Wins, Draws, Losses, Goals For/Against, Series Won, Favorite Opponent, Revenge Opportunity, Next Matches
 - **Themes** - Dark mode (default), Light mode, and Earth mode (whisky/brown colors)
-- **User Accounts** - Admin (admin@example.com / admin123) and test user (bruker@example.com / bruker123)
+- **User Registration** - Users can register with email and password (8+ chars, letters + numbers)
+- **Account Security** - Account lockout after 5 failed login attempts, admin can unlock
+- **User Management** - Admin can view users, unlock accounts, and reset passwords
+- **Profile** - Users can change their own password
 - **Unit Tests** - Comprehensive test suite with pytest
 - **Setup Script** - `./setup.sh` to initialize database and seed test data
 
 ### Upcoming Features (Phase 2+)
 
-- User registration with email verification
 - Tournament system (single/double elimination)
 - Support for additional competitive games
 

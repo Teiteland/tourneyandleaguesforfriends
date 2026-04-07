@@ -17,9 +17,14 @@
                 <li><a href="/leagues">Leagues</a></li>
                 <li><a href="/players">Players</a></li>
                 {% if session.get('user_id') %}
+                    <li><a href="/profile">Profile</a></li>
+                    {% if session.get('is_admin') %}
+                    <li><a href="/admin/users">Users</a></li>
+                    {% endif %}
                     <li><a href="/logout">Logout ({{ session.get('username') }})</a></li>
                 {% else %}
                     <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Register</a></li>
                 {% endif %}
                 <li class="theme-selector">
                     <select id="theme-select">

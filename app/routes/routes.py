@@ -18,22 +18,189 @@ def login():
         password = request.form.get('password')
         
         user = User.query.filter_by(email=email).first()
+        
+        if user and user.is_locked:
+            flash('Your account is locked. Please contact an admin.', 'error')
+            return render_template('login.html')
+        
         if user and check_password_hash(user.password_hash, password):
+            user.failed_login_attempts = 0
+            db.session.commit()
             session['user_id'] = user.id
             session['is_admin'] = user.is_admin
             session['username'] = user.username
             flash('Logged in successfully!', 'success')
             return redirect(url_for('main.index'))
         else:
-            flash('Invalid email or password', 'error')
+            if user:
+                user.failed_login_attempts += 1
+                if user.failed_login_attempts >= 5:
+                    user.is_locked = True
+                    db.session.commit()
+                    flash('Too many failed attempts. Your account is now locked. Contact an admin.', 'error')
+                else:
+                    db.session.commit()
+                    flash(f'Invalid email or password. {5 - user.failed_login_attempts} attempts remaining.', 'error')
+            else:
+                flash('Invalid email or password', 'error')
     
     return render_template('login.html')
+
+@main.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm = request.form.get('confirm_password')
+        
+        errors = []
+        
+        if User.query.filter_by(email=email).first():
+            errors.append('Email is already registered')
+        
+        if User.query.filter_by(username=username).first():
+            errors.append('Username is already taken')
+        
+        if len(password) < 8:
+            errors.append('Password must be at least 8 characters')
+        
+        if not any(c.isalpha() for c in password):
+            errors.append('Password must contain at least one letter')
+        
+        if not any(c.isdigit() for c in password):
+            errors.append('Password must contain at least one number')
+        
+        if password != confirm:
+            errors.append('Passwords do not match')
+        
+        if errors:
+            for error in errors:
+                flash(error, 'error')
+            return render_template('register.html', username=username, email=email)
+        
+        user = User(
+            username=username,
+            email=email,
+            password_hash=generate_password_hash(password),
+            is_admin=False,
+            failed_login_attempts=0,
+            is_locked=False
+        )
+        db.session.add(user)
+        db.session.commit()
+        
+        flash('Registration successful! Please log in.', 'success')
+        return redirect(url_for('main.login'))
+    
+    return render_template('register.html')
 
 @main.route('/logout')
 def logout():
     session.clear()
     flash('Logged out successfully!', 'success')
     return redirect(url_for('main.index'))
+
+@main.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if not session.get('user_id'):
+        flash('Please log in to view your profile', 'error')
+        return redirect(url_for('main.login'))
+    
+    user = User.query.get(session['user_id'])
+    
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not check_password_hash(user.password_hash, current_password):
+            flash('Current password is incorrect', 'error')
+            return render_template('profile.html', user=user)
+        
+        errors = []
+        
+        if len(new_password) < 8:
+            errors.append('Password must be at least 8 characters')
+        
+        if not any(c.isalpha() for c in new_password):
+            errors.append('Password must contain at least one letter')
+        
+        if not any(c.isdigit() for c in new_password):
+            errors.append('Password must contain at least one number')
+        
+        if new_password != confirm_password:
+            errors.append('New passwords do not match')
+        
+        if errors:
+            for error in errors:
+                flash(error, 'error')
+            return render_template('profile.html', user=user)
+        
+        user.password_hash = generate_password_hash(new_password)
+        db.session.commit()
+        flash('Password changed successfully!', 'success')
+        return redirect(url_for('main.profile'))
+    
+    return render_template('profile.html', user=user)
+
+@main.route('/admin/users')
+def admin_users():
+    if not session.get('is_admin'):
+        flash('Admin access required', 'error')
+        return redirect(url_for('main.index'))
+    
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template('admin_users.html', users=users)
+
+@main.route('/admin/unlock/<int:user_id>')
+def admin_unlock(user_id):
+    if not session.get('is_admin'):
+        flash('Admin access required', 'error')
+        return redirect(url_for('main.index'))
+    
+    user = User.query.get_or_404(user_id)
+    user.is_locked = False
+    user.failed_login_attempts = 0
+    db.session.commit()
+    flash(f'User {user.username} has been unlocked', 'success')
+    return redirect(url_for('main.admin_users'))
+
+@main.route('/admin/reset-password/<int:user_id>', methods=['POST'])
+def admin_reset_password(user_id):
+    if not session.get('is_admin'):
+        flash('Admin access required', 'error')
+        return redirect(url_for('main.index'))
+    
+    user = User.query.get_or_404(user_id)
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+    
+    errors = []
+    
+    if len(new_password) < 8:
+        errors.append('Password must be at least 8 characters')
+    
+    if not any(c.isalpha() for c in new_password):
+        errors.append('Password must contain at least one letter')
+    
+    if not any(c.isdigit() for c in new_password):
+        errors.append('Password must contain at least one number')
+    
+    if new_password != confirm_password:
+        errors.append('Passwords do not match')
+    
+    if errors:
+        for error in errors:
+            flash(error, 'error')
+        return redirect(url_for('main.admin_users'))
+    
+    user.password_hash = generate_password_hash(new_password)
+    user.failed_login_attempts = 0
+    user.is_locked = False
+    db.session.commit()
+    flash(f'Password for {user.username} has been reset', 'success')
+    return redirect(url_for('main.admin_users'))
 
 @main.route('/leagues')
 def leagues():
