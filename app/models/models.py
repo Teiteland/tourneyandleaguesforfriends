@@ -31,7 +31,10 @@ class League(db.Model):
     status = db.Column(db.String(20), default='active')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     ended_at = db.Column(db.DateTime, nullable=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    unique_id = db.Column(db.String(20), unique=True, nullable=True)
     game = db.relationship('Game', backref='leagues')
+    owner = db.relationship('User', backref='owned_leagues')
 
 class LeagueRound(db.Model):
     id = db.Column(db.Integer, primary_key=True)

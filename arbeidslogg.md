@@ -1,3 +1,4 @@
+
 source venv/bin/activate
 
 
@@ -76,3 +77,19 @@ God natt og lykke til med testing! 🌙
   Session   Project kickoff: AGENTS.md for Mario Kart 8 tourn…
   Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
 ___
+
+
+
+  Session   Project kickoff: AGENTS.md for Mario Kart 8 tourn…
+  Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
+
+---
+
+Anbefalt løsning (Alternativ B)
+Du kan selv kjøre dette i terminalen:
+cd /home/teiteland/spillturneringogliga
+sqlite3 instance/gaming_liga.db "UPDATE user SET is_admin = 1 WHERE username = 'Teiteland';"
+Deretter vil Teiteland ha admin-tilgang og kunne se alle Mario Kart-spillere og alle admin-funksjoner.
+---
+
+

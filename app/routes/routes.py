@@ -1,9 +1,26 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from app.models.models import db, League, LeagueRound, Match, Player, Game, User
-from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+import uuid
 
 main = Blueprint('main', __name__)
+
+def can_manage_league(league_id):
+    """Check if current user can manage the league (admin or owner)."""
+    if session.get('is_admin'):
+        return True
+    league = League.query.get(league_id)
+    return league and league.owner_id == session.get('user_id')
+
+def can_view_league(league_id):
+    """Check if current user can view the league."""
+    league = League.query.get(league_id)
+    if not league:
+        return False
+    if league.status != 'archived':
+        return True
+    return session.get('user_id') and (session.get('is_admin') or league.owner_id == session.get('user_id'))
 
 @main.route('/')
 def index():
@@ -209,9 +226,9 @@ def leagues():
 
 @main.route('/leagues/create', methods=['GET', 'POST'])
 def create_league():
-    if not session.get('is_admin'):
-        flash('Admin access required', 'error')
-        return redirect(url_for('main.leagues'))
+    if not session.get('user_id'):
+        flash('Please log in to create a league', 'error')
+        return redirect(url_for('main.login'))
     
     games = Game.query.all()
     players = Player.query.all()
@@ -225,7 +242,12 @@ def create_league():
             flash('Name and game are required', 'error')
             return render_template('create_league.html', games=games, players=players)
         
-        league = League(name=name, game_id=game_id)
+        league = League(
+            name=name,
+            game_id=game_id,
+            owner_id=session['user_id'],
+            unique_id=uuid.uuid4().hex[:12]
+        )
         db.session.add(league)
         db.session.flush()
         
@@ -248,14 +270,16 @@ def league(league_id):
         matches_by_round[round_obj.round_number] = matches
     
     standings = calculate_standings(league_id)
+    can_manage = can_manage_league(league_id)
     
     return render_template('league.html', league=league, rounds=rounds, 
-                           matches_by_round=matches_by_round, standings=standings)
+                           matches_by_round=matches_by_round, standings=standings,
+                           can_manage=can_manage)
 
 @main.route('/leagues/<int:league_id>/round/<int:round_number>/activate')
 def activate_round(league_id, round_number):
-    if not session.get('is_admin'):
-        flash('Admin access required', 'error')
+    if not can_manage_league(league_id):
+        flash('You do not have permission to manage this league', 'error')
         return redirect(url_for('main.league', league_id=league_id))
     
     league = League.query.get_or_404(league_id)
@@ -280,8 +304,8 @@ def activate_round(league_id, round_number):
 
 @main.route('/leagues/<int:league_id>/round/<int:round_number>/complete')
 def complete_round(league_id, round_number):
-    if not session.get('is_admin'):
-        flash('Admin access required', 'error')
+    if not can_manage_league(league_id):
+        flash('You do not have permission to manage this league', 'error')
         return redirect(url_for('main.league', league_id=league_id))
     
     league = League.query.get_or_404(league_id)
@@ -339,8 +363,8 @@ def _auto_activate_next_round(league_id):
 
 @main.route('/leagues/<int:league_id>/end')
 def end_league(league_id):
-    if not session.get('is_admin'):
-        flash('Admin access required', 'error')
+    if not can_manage_league(league_id):
+        flash('Admin or owner access required', 'error')
         return redirect(url_for('main.league', league_id=league_id))
     
     league = League.query.get_or_404(league_id)
@@ -361,6 +385,8 @@ def match(league_id, match_id):
     if request.method == 'POST':
         if is_completed:
             flash('Cannot change result. This round or league is completed.', 'error')
+        elif not can_manage_league(league_id):
+            flash('You do not have permission to manage this league', 'error')
         else:
             action = request.form.get('action')
             
@@ -400,17 +426,27 @@ def match(league_id, match_id):
                     db.session.commit()
                     flash('Match result saved!', 'success')
     
+    can_manage = can_manage_league(league_id)
     return render_template('match.html', league=league, match=match, 
-                           is_completed=is_completed, round_completed=round_completed)
+                           is_completed=is_completed, round_completed=round_completed,
+                           can_manage=can_manage)
 
 @main.route('/players')
 def players():
-    all_players = Player.query.all()
+    if session.get('is_admin'):
+        all_players = Player.query.all()
+    else:
+        all_players = Player.query.filter_by(is_dummy=False).all()
     return render_template('players.html', players=all_players)
 
 @main.route('/players/<int:player_id>')
 def player(player_id):
     player = Player.query.get_or_404(player_id)
+    
+    # Hide dummy players from logged-in non-admin users
+    if player.is_dummy and session.get('user_id') and not session.get('is_admin'):
+        flash('Player not found', 'error')
+        return redirect(url_for('main.players'))
     
     # All matches including cancelled (for history)
     all_matches = Match.query.filter(

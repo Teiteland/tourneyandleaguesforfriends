@@ -45,8 +45,8 @@
    - Home and away matches grouped in the same round
    - Configurable number of players (start: 12, max: 64)
    - Multiple parallel leagues/seasons
-   - Admin can end league manually even if not all matches played
-   - Admin can edit match results while league is active
+   - Owner or admin can end league manually even if not all matches played
+   - Owner or admin can edit match results while league is active
    - Points system: 3 for win, 1 for draw, 0 for loss
 
 2. **Match Scheduling**
@@ -55,12 +55,19 @@
    - Manual result entry with confirmation dialog
    - Round-based activation: rounds can be locked, active, or completed
    - Manual or automatic round progression
-   - Walkover: admin manually selects winner (3-0 default)
+   - Walkover: owner/admin manually selects winner (3-0 default)
    - Cancel match: removes from statistics but keeps in log
 
 3. **Player Management**
    - 12 auto-generated dummy players from Mario Kart universe on initialization
    - Player statistics tracked
+
+4. **Owner System**
+   - Any logged-in user can create a league
+   - Creator becomes the league owner
+   - Owner can: edit results, set walkover, cancel matches, activate/complete rounds, end league
+   - Admin can manage ALL leagues
+   - Owner transfer only via database
 
 4. **Player Statistics**
    - Wins, Draws, Losses
@@ -120,7 +127,9 @@
 |--------|------|-------------|
 | id | INTEGER | Primary key |
 | name | TEXT | League name |
+| unique_id | TEXT | Unique identifier (12 chars) |
 | game_id | INTEGER | Foreign key to Games |
+| owner_id | INTEGER | Foreign key to Users (creator) |
 | status | TEXT | active/completed/archived |
 | created_at | DATETIME | Creation timestamp |
 | ended_at | DATETIME | End timestamp |

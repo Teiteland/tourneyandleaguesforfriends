@@ -7,6 +7,9 @@
     <h2>{{ league.name }}</h2>
     <p class="league-game">Game: {{ league.game.name if league.game else 'N/A' }}</p>
     <p class="league-status status-{{ league.status }}">{{ league.status }}</p>
+    {% if league.owner %}
+    <p class="league-owner">Owner: {{ league.owner.username }}</p>
+    {% endif %}
 </div>
 
 <section class="standings-section">
@@ -70,7 +73,7 @@
             {% endif %}
         </h4>
         
-        {% if session.get('is_admin') and league.status == 'active' %}
+        {% if can_manage and league.status == 'active' %}
         <div class="round-actions">
             {% if not round_obj.is_active and not round_obj.is_completed %}
             <a href="/leagues/{{ league.id }}/round/{{ round_obj.round_number }}/activate" class="btn-small">Activate Round</a>
@@ -102,7 +105,7 @@
                             {% if match.is_walkover %}
                             WO
                             {% if match.walkover_winner == 1 %}({{ match.home_player.name }}){% else %}({{ match.away_player.name }}){% endif %}
-                            {% elif session.get('is_admin') and round_obj.is_active %}
+                            {% elif can_manage and round_obj.is_active %}
                             <a href="/leagues/{{ league.id }}/match/{{ match.id }}">{{ match.home_score }} - {{ match.away_score }}</a>
                             {% else %}
                             {{ match.home_score }} - {{ match.away_score }}
@@ -121,9 +124,9 @@
                 </div>
                 <div class="match-track">Track: {{ match.home_track or 'TBD' }}</div>
                 {% if round_obj.is_active and match.status != 'cancelled' %}
-                    {% if match.home_score is none and match.home_player_id and match.away_player_id and session.get('is_admin') %}
+                    {% if match.home_score is none and match.home_player_id and match.away_player_id and can_manage %}
                     <a href="/leagues/{{ league.id }}/match/{{ match.id }}" class="btn-small">Enter Result</a>
-                    {% elif match.home_score is not none and session.get('is_admin') %}
+                    {% elif match.home_score is not none and can_manage %}
                     <a href="/leagues/{{ league.id }}/match/{{ match.id }}" class="btn-small">Edit</a>
                     {% elif match.home_score is not none %}
                     <span class="match-date">{{ match.played_at.strftime('%Y-%m-%d') if match.played_at else '' }}</span>
@@ -136,7 +139,7 @@
     {% endfor %}
 </section>
 
-{% if session.get('is_admin') and league.status == 'active' %}
+{% if can_manage and league.status == 'active' %}
     <div class="admin-actions">
         <a href="/leagues/{{ league.id }}/end" class="btn-danger" onclick="return confirm('Are you sure you want to end this league?')">End League</a>
     </div>

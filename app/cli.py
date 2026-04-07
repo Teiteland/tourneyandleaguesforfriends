@@ -65,12 +65,13 @@ def seed_data():
     from app.models.models import League, LeagueRound, Match
     players = Player.query.all()
     game = Game.query.first()
+    test_user = User.query.filter_by(email='bruker@example.com').first()
     
     if not game:
         click.echo('No game found. Run init-db first.')
         return
     
-    league = League(name='Test League - Season 1', game_id=game.id)
+    league = League(name='Test League - Season 1', game_id=game.id, owner_id=test_user.id if test_user else None)
     db.session.add(league)
     db.session.flush()
     
@@ -184,7 +185,7 @@ def seed_data():
     db.session.add(match12)
     
     # Season 2 (completed)
-    league2 = League(name='Test League - Season 2', game_id=game.id, status='completed')
+    league2 = League(name='Test League - Season 2', game_id=game.id, status='completed', owner_id=test_user.id if test_user else None)
     db.session.add(league2)
     db.session.flush()
     

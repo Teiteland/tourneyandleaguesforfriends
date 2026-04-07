@@ -34,7 +34,7 @@
     <div class="alert alert-error">This round is completed. Results cannot be changed.</div>
     {% endif %}
     
-    {% if not is_completed and match.status != 'cancelled' %}
+    {% if not is_completed and match.status != 'cancelled' and can_manage %}
     <form method="POST" class="result-form">
         <div class="form-row">
             <div class="form-group">
@@ -57,7 +57,7 @@
         <h4>Special Options</h4>
         
         <div class="walkover-section" style="margin-bottom: 1rem;">
-            <p><strong>Walkover:</strong> Admin manually selects the winner.</p>
+            <p><strong>Walkover:</strong> League owner manually selects the winner.</p>
             <form method="POST" style="display: inline;">
                 <input type="hidden" name="action" value="walkover">
                 <button type="submit" name="walkover_winner" value="1" class="btn-secondary" onclick="return confirm('Set walkover - {{ match.home_player.name }} wins 3-0?')">{{ match.home_player.name }} Wins (3-0)</button>

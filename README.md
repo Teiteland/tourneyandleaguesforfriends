@@ -70,6 +70,54 @@ The application will be available at `http://127.0.0.1:5000`
    flask run
    ```
 
+## Admin Access
+
+To grant admin privileges to a user, run:
+```bash
+python -c "
+from app import create_app
+from app.models.models import db, User
+app = create_app()
+with app.app_context():
+    user = User.query.filter_by(username='USERNAME').first()
+    if user:
+        user.is_admin = True
+        db.session.commit()
+        print(f'{user.username} is now admin!')
+"
+```
+Replace `USERNAME` with the actual username.
+
+## League Owner System
+
+Users who create a league become the "owner" of that league. Owners can:
+- Edit match results
+- Cancel matches
+- Set walkover results
+- Activate and complete rounds
+- End the league
+
+This is in addition to regular user capabilities. Admins can manage ALL leagues, while owners can only manage their own leagues.
+
+### Transferring League Ownership
+
+To transfer ownership of a league to another user, run:
+```bash
+python -c "
+from app import create_app
+from app.models.models import db, League, User
+app = create_app()
+with app.app_context():
+    league = League.query.get(LEAGUE_ID)
+    new_owner = User.query.filter_by(username='USERNAME').first()
+    if league and new_owner:
+        league.owner_id = new_owner.id
+        db.session.commit()
+        print(f'Ownership transferred to {new_owner.username}')
+"
+```
+Replace `LEAGUE_ID` with the league's database ID and `USERNAME` with the new owner's username.
+
 ## Testing
 
 ```bash
