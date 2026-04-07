@@ -67,7 +67,8 @@
    - Goals For, Goals Against
    - Series Won (leagues won as first place)
    - Favorite Opponent (most wins against single opponent)
-   - Revenge Opportunities (last losses without subsequent win)
+   - Revenge Opportunity (last loss without subsequent win)
+   - Next Matches (upcoming unplayed matches)
 
 5. **History Tracking**
    - Per player history

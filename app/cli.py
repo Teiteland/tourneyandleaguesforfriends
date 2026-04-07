@@ -45,8 +45,19 @@ def init_db():
         )
         db.session.add(admin)
     
+    test_user = User.query.filter_by(email='bruker@example.com').first()
+    if not test_user:
+        test_user = User(
+            username='bruker',
+            email='bruker@example.com',
+            password_hash=generate_password_hash('bruker123'),
+            is_admin=False,
+            created_at=datetime.utcnow()
+        )
+        db.session.add(test_user)
+    
     db.session.commit()
-    click.echo('Database initialized with dummy players, games, and admin user.')
+    click.echo('Database initialized with dummy players, games, and users.')
 
 @click.command('seed-data')
 @with_appcontext
@@ -70,7 +81,7 @@ def seed_data():
     db.session.add(round1)
     db.session.flush()
     
-    # Mario (home) vs Luigi
+    # Mario (home) vs Luigi - PLAYED
     match1 = Match(league_id=league.id, round_id=round1.id,
           home_player_id=player_ids[0], away_player_id=player_ids[1],
           home_score=3, away_score=1, is_draw=False,
@@ -78,7 +89,7 @@ def seed_data():
           status='played')
     db.session.add(match1)
     
-    # Luigi (home) vs Mario
+    # Luigi (home) vs Mario - PLAYED
     match2 = Match(league_id=league.id, round_id=round1.id,
           home_player_id=player_ids[1], away_player_id=player_ids[0],
           home_score=0, away_score=2, is_draw=False,
@@ -86,20 +97,16 @@ def seed_data():
           status='played')
     db.session.add(match2)
     
-    # Peach (home) vs Daisy
+    # Peach (home) vs Daisy - NOT PLAYED (will show as Next Match)
     match3 = Match(league_id=league.id, round_id=round1.id,
           home_player_id=player_ids[2], away_player_id=player_ids[3],
-          home_score=2, away_score=2, is_draw=True,
-          played_at=datetime(2024, 1, 1), home_track='Mario Circuit',
-          status='played')
+          home_track='Mario Circuit')
     db.session.add(match3)
     
-    # Daisy (home) vs Peach
+    # Daisy (home) vs Peach - NOT PLAYED (will show as Next Match)
     match4 = Match(league_id=league.id, round_id=round1.id,
           home_player_id=player_ids[3], away_player_id=player_ids[2],
-          home_score=1, away_score=3, is_draw=False,
-          played_at=datetime(2024, 1, 1), home_track='Mountin',
-          status='played')
+          home_track='Mountin')
     db.session.add(match4)
     
     # Round 2: Mario vs Peach, Luigi vs Daisy + reverses (locked initially)

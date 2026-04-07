@@ -106,17 +106,6 @@ def activate_round(league_id, round_number):
         flash('Cannot activate a completed round', 'error')
         return redirect(url_for('main.league', league_id=league_id))
     
-    # Check if previous rounds are all completed before activating
-    previous_rounds = LeagueRound.query.filter(
-        LeagueRound.league_id == league_id,
-        LeagueRound.round_number < round_number
-    ).all()
-    
-    for pr in previous_rounds:
-        if not pr.is_completed:
-            flash(f'Round {pr.round_number} must be completed before activating round {round_number}', 'error')
-            return redirect(url_for('main.league', league_id=league_id))
-    
     round_obj.is_active = True
     db.session.commit()
     flash(f'Round {round_number} is now active', 'success')
@@ -255,10 +244,23 @@ def players():
 @main.route('/players/<int:player_id>')
 def player(player_id):
     player = Player.query.get_or_404(player_id)
-    matches = Match.query.filter(
-        ((Match.home_player_id == player_id) | (Match.away_player_id == player_id)) &
-        (Match.home_score.isnot(None))
+    
+    # All matches including cancelled (for history)
+    all_matches = Match.query.filter(
+        (Match.home_player_id == player_id) | (Match.away_player_id == player_id)
     ).order_by(Match.played_at.desc()).all()
+    
+    # Only played matches (for statistics) - exclude cancelled
+    matches = [m for m in all_matches if m.home_score is not None and m.status != 'cancelled']
+    
+    # Next matches (where player is involved, no result yet, not cancelled, round is active)
+    next_matches = Match.query.filter(
+        ((Match.home_player_id == player_id) | (Match.away_player_id == player_id)) &
+        (Match.home_score.is_(None)) &
+        (Match.status != 'cancelled')
+    ).join(LeagueRound).filter(
+        LeagueRound.is_active == True
+    ).order_by(LeagueRound.round_number).limit(3).all()
     
     wins = 0
     draws = 0
@@ -338,6 +340,15 @@ def player(player_id):
         if len(revenge_opportunities) >= 5:
             break
     
+    if revenge_opportunities:
+        latest = revenge_opportunities[0]
+        revenge_opp = {
+            'name': latest['opponent_name'],
+            'score': latest['score']
+        }
+    else:
+        revenge_opp = None
+    
     from app.models.models import League
     leagues = League.query.all()
     series_won = 0
@@ -354,7 +365,8 @@ def player(player_id):
                           goals_for=goals_for, goals_against=goals_against,
                           series_won=series_won,
                           favorite_opponent=favorite_opponent,
-                          revenge_opportunities=revenge_opportunities)
+                          revenge_opp=revenge_opp,
+                          next_matches=next_matches)
 
 def generate_round_robin(league, player_ids):
     if len(player_ids) < 2:
@@ -372,6 +384,10 @@ def generate_round_robin(league, player_ids):
     
     for round_num in range(num_rounds):
         league_round = LeagueRound(league_id=league.id, round_number=round_num + 1)
+        
+        if round_num == 0:
+            league_round.is_active = True
+        
         db.session.add(league_round)
         db.session.flush()
         

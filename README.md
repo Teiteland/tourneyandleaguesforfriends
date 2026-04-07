@@ -30,9 +30,9 @@ The application will be available at `http://127.0.0.1:5000`
 - **Points System** - 3 points for win, 1 point for draw, 0 points for loss
 - **Match Scheduling** - Home player selects track (dropdown or manual entry)
 - **History Tracking** - View history per player, tournament, league round, and overall league
-- **Player Statistics** - Wins, Draws, Losses, Goals For/Against, Series Won, Favorite Opponent, Revenge Opportunities
+- **Player Statistics** - Wins, Draws, Losses, Goals For/Against, Series Won, Favorite Opponent, Revenge Opportunity, Next Matches
 - **Themes** - Dark mode (default), Light mode, and Earth mode (whisky/brown colors)
-- **Mock Login** - Simple login for testing purposes (admin@example.com / admin123)
+- **User Accounts** - Admin (admin@example.com / admin123) and test user (bruker@example.com / bruker123)
 - **Unit Tests** - Comprehensive test suite with pytest
 - **Setup Script** - `./setup.sh` to initialize database and seed test data
 

@@ -1,3 +1,6 @@
+source venv/bin/activate
+
+
 pÅska
 Session Summary - Today
 Completed:
@@ -52,3 +55,24 @@ Vi ordner GitHub i morgen! 👋
   Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
 
 ---
+# Push to GitHub
+$ cd /home/teiteland/spillturneringogliga && git push
+To https://github.com/Teiteland/tourneyandleaguesforfriends.git
+   180cce4..53f5c4d  main -> main
+Thinking: Ferdig! Alt er oppdatert og pushet til GitHub.
+Ferdig! 
+Oppdatert og pushet til GitHub:
+- AGENTS.md - lagt til runde-aktivering i feature-listen
+- README.md - lagt til nye features (walkover, cancel match, round activation)
+- Commit: "Add round activation system with walkover and cancel match"
+Test det i morgen:
+rm instance/gaming_liga.db
+./setup.sh
+flask run
+Logg inn som admin → gå til Test League → du vil se Runde 1 som Active med "Complete Round" knapp, og Runde 2-3 som Locked.
+God natt og lykke til med testing! 🌙
+
+---
+  Session   Project kickoff: AGENTS.md for Mario Kart 8 tourn…
+  Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
+___

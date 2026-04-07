@@ -224,7 +224,7 @@ def test_revenge_opportunities(app, client):
         assert response.status_code == 200
         html = response.data.decode()
         
-        assert 'Revenge Opportunities' in html, f"HTML: {html[:500]}"
+        assert 'Revenge' in html, f"HTML: {html[:500]}"
         assert 'Mario' in html
 
 def test_series_won(app, client):

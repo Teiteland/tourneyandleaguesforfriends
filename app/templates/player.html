@@ -34,29 +34,42 @@
             <div class="stat-label">Favorite Opponent ({{ favorite_opponent.wins }} wins)</div>
         </div>
         {% endif %}
+        {% if revenge_opp %}
+        <div class="stat-card highlight">
+            <div class="stat-value">{{ revenge_opp.name }}</div>
+            <div class="stat-label">Revenge ({{ revenge_opp.score }})</div>
+        </div>
+        {% endif %}
     </div>
 </section>
 
-{% if revenge_opportunities %}
-<section class="revenge-section">
-    <h3>Revenge Opportunities</h3>
-    <p class="section-desc">Last losses where revenge has not been taken</p>
+{% if next_matches %}
+<section class="next-matches">
+    <h3>Next Matches</h3>
     <table class="history-table">
         <thead>
             <tr>
                 <th>Opponent</th>
-                <th>Date</th>
-                <th>Score</th>
-                <th>Status</th>
+                <th>Track</th>
+                <th>Round</th>
+                <th>League</th>
             </tr>
         </thead>
         <tbody>
-            {% for loss in revenge_opportunities %}
+            {% for match in next_matches %}
             <tr>
-                <td><a href="/players/{{ loss.opponent_id }}">{{ loss.opponent_name }}</a></td>
-                <td>{{ loss.date.strftime('%Y-%m-%d') if loss.date else '-' }}</td>
-                <td>{{ loss.score }}</td>
-                <td>Not avenged</td>
+                <td>
+                    {% if match.home_player_id == player.id %}
+                        vs <a href="/players/{{ match.away_player_id }}" class="away-link">{{ match.away_player.name }}</a>
+                        <span class="home-indicator">(Home)</span>
+                    {% else %}
+                        vs <a href="/players/{{ match.home_player_id }}" class="home-link">{{ match.home_player.name }}</a>
+                        <span class="away-indicator">(Away)</span>
+                    {% endif %}
+                </td>
+                <td>{{ match.home_track or 'TBD' }}</td>
+                <td>Round {{ match.round.round_number }}</td>
+                <td><a href="/leagues/{{ match.league_id }}">{{ match.league.name }}</a></td>
             </tr>
             {% endfor %}
         </tbody>
