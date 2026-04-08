@@ -69,6 +69,33 @@ def init_db():
     db.session.commit()
     click.echo('Database initialized with dummy players, games, and users.')
 
+@click.command('create-admin')
+@with_appcontext
+def create_admin():
+    """Create or reset the admin user."""
+    admin = User.query.filter_by(email='even.teigland@gmail.com').first()
+    
+    if not admin:
+        admin = User(
+            username='Teiteland',
+            email='even.teigland@gmail.com',
+            password_hash=generate_password_hash('admin123'),
+            is_admin=True,
+            created_at=datetime.utcnow()
+        )
+        db.session.add(admin)
+        click.echo('Admin user created: Teiteland (even.teigland@gmail.com)')
+    else:
+        admin.username = 'Teiteland'
+        admin.password_hash = generate_password_hash('admin123')
+        admin.is_admin = True
+        admin.is_locked = False
+        admin.failed_login_attempts = 0
+        click.echo('Admin user reset: Teiteland (even.teigland@gmail.com)')
+    
+    db.session.commit()
+    click.echo('Password: admin123')
+
 @click.command('seed-data')
 @with_appcontext
 def seed_data():
