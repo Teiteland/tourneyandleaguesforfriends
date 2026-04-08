@@ -239,6 +239,70 @@ def admin_reset_password(user_id):
     flash(f'Password for {user.username} has been reset', 'success')
     return redirect(url_for('main.admin_users'))
 
+@main.route('/admin/games')
+def admin_games():
+    if not session.get('is_admin'):
+        flash('Admin access required', 'error')
+        return redirect(url_for('main.index'))
+    
+    games = Game.query.order_by(Game.name).all()
+    return render_template('admin_games.html', games=games)
+
+@main.route('/admin/games/create', methods=['GET', 'POST'])
+def admin_create_game():
+    if not session.get('is_admin'):
+        flash('Admin access required', 'error')
+        return redirect(url_for('main.index'))
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        platform = request.form.get('platform')
+        other_platform = request.form.get('other_platform')
+        max_players = request.form.get('max_players')
+        allow_tournament = request.form.get('allow_tournament') == 'on'
+        allow_league = request.form.get('allow_league') == 'on'
+        
+        if not name:
+            flash('Game name is required', 'error')
+            return redirect(url_for('main.admin_games'))
+        
+        if platform == 'other' and other_platform:
+            platform = other_platform
+        
+        game = Game(
+            name=name,
+            platform=platform if platform else None,
+            max_players=int(max_players) if max_players else None,
+            allow_tournament=allow_tournament,
+            allow_league=allow_league
+        )
+        db.session.add(game)
+        db.session.commit()
+        flash(f'Game "{name}" created successfully!', 'success')
+        return redirect(url_for('main.admin_games'))
+    
+    return render_template('admin_create_game.html')
+
+@main.route('/admin/games/delete/<int:game_id>', methods=['POST'])
+def admin_delete_game(game_id):
+    if not session.get('is_admin'):
+        flash('Admin access required', 'error')
+        return redirect(url_for('main.index'))
+    
+    game = Game.query.get_or_404(game_id)
+    game_name = game.name
+    
+    if game.leagues or game.tournaments:
+        game.is_active = False
+        db.session.commit()
+        flash(f'Game "{game_name}" has been deactivated (in use)', 'success')
+    else:
+        db.session.delete(game)
+        db.session.commit()
+        flash(f'Game "{game_name}" has been deleted', 'success')
+    
+    return redirect(url_for('main.admin_games'))
+
 @main.route('/leagues')
 def leagues():
     all_leagues = League.query.order_by(League.created_at.desc()).all()
@@ -250,7 +314,7 @@ def create_league():
         flash('Please log in to create a league', 'error')
         return redirect(url_for('main.login'))
     
-    games = Game.query.all()
+    games = Game.query.filter_by(allow_league=True, is_active=True).all()
     players = Player.query.all()
     
     if request.method == 'POST':
@@ -726,7 +790,7 @@ def create_tournament():
         flash('Please log in to create a tournament', 'error')
         return redirect(url_for('main.login'))
     
-    games = Game.query.all()
+    games = Game.query.filter_by(allow_tournament=True, is_active=True).all()
     players = Player.query.all()
     
     if request.method == 'POST':

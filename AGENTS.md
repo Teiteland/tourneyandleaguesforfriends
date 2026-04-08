@@ -113,6 +113,9 @@
 | id | INTEGER | Primary key |
 | name | TEXT | Game name |
 | platform | TEXT | Gaming platform |
+| max_players | INTEGER | Max players (null = unlimited) |
+| allow_tournament | BOOLEAN | Allow tournaments |
+| allow_league | BOOLEAN | Allow leagues |
 | is_active | BOOLEAN | Currently playable |
 
 #### Players Table

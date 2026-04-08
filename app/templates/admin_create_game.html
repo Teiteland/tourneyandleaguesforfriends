@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Add Game - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Add New Game</h2>
+    <form method="POST">
+        <div class="form-group">
+            <label for="name">Game Name *</label>
+            <input type="text" id="name" name="name" required placeholder="e.g., Mario Kart 8 Deluxe">
+        </div>
+        
+        <div class="form-group">
+            <label for="platform">Platform</label>
+            <select id="platform" name="platform" onchange="toggleOtherField()">
+                <option value="">Select platform</option>
+                <option value="Nintendo Switch">Nintendo Switch</option>
+                <option value="Nintendo Switch 2">Nintendo Switch 2</option>
+                <option value="PlayStation">PlayStation</option>
+                <option value="Xbox">Xbox</option>
+                <option value="PC">PC</option>
+                <option value="other">Other...</option>
+            </select>
+        </div>
+        
+        <div class="form-group" id="other_platform_group" style="display:none;">
+            <label for="other_platform">Specify Platform</label>
+            <input type="text" id="other_platform" name="other_platform" placeholder="Enter platform name">
+        </div>
+        
+        <div class="form-group">
+            <label for="max_players">Max Players (optional)</label>
+            <input type="number" id="max_players" name="max_players" min="2" placeholder="Leave empty for unlimited">
+            <p class="form-hint">Leave empty for unlimited number of players</p>
+        </div>
+        
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="allow_tournament" checked>
+                Allow Tournaments
+            </label>
+        </div>
+        
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="allow_league" checked>
+                Allow Leagues
+            </label>
+        </div>
+        
+        <button type="submit" class="btn-primary">Create Game</button>
+        <a href="/admin/games" class="btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+function toggleOtherField() {
+    var platform = document.getElementById('platform').value;
+    var otherGroup = document.getElementById('other_platform_group');
+    if (platform === 'other') {
+        otherGroup.style.display = 'block';
+    } else {
+        otherGroup.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

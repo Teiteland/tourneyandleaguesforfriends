@@ -12,9 +12,9 @@ DUMMY_PLAYERS = [
 ]
 
 DEFAULT_GAMES = [
-    {'name': 'Mario Kart 8 Deluxe', 'platform': 'Nintendo Switch'},
-    {'name': 'Mario Kart 8', 'platform': 'Nintendo Switch'},
-    {'name': 'Mario Kart World', 'platform': 'Nintendo Switch 2'}
+    {'name': 'Mario Kart 8 Deluxe', 'platform': 'Nintendo Switch', 'max_players': 12, 'allow_tournament': True, 'allow_league': True},
+    {'name': 'Mario Kart 8', 'platform': 'Nintendo Switch', 'max_players': 12, 'allow_tournament': True, 'allow_league': True},
+    {'name': 'Mario Kart World', 'platform': 'Nintendo Switch 2', 'max_players': 24, 'allow_tournament': True, 'allow_league': True}
 ]
 
 @click.command('init-db')

@@ -21,6 +21,7 @@
                     <li><a href="/profile">Profile</a></li>
                     {% if session.get('is_admin') %}
                     <li><a href="/admin/users">Users</a></li>
+                    <li><a href="/admin/games">Games</a></li>
                     {% endif %}
                     <li><a href="/logout">Logout ({{ session.get('username') }})</a></li>
                 {% else %}

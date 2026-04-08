@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Games - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Manage Games</h2>
+    <a href="/admin/games/create" class="btn-primary">Add New Game</a>
+</div>
+
+{% if games %}
+<table class="admin-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Platform</th>
+            <th>Max Players</th>
+            <th>Tournaments</th>
+            <th>Leagues</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for game in games %}
+        <tr>
+            <td>{{ game.name }}</td>
+            <td>{{ game.platform or '-' }}</td>
+            <td>{{ game.max_players or 'Unlimited' }}</td>
+            <td>{% if game.allow_tournament %}✓{% else %}✗{% endif %}</td>
+            <td>{% if game.allow_league %}✓{% else %}✗{% endif %}</td>
+            <td>
+                {% if game.is_active %}
+                <span class="badge badge-success">Active</span>
+                {% else %}
+                <span class="badge badge-inactive">Inactive</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if game.is_active and not game.leagues and not game.tournaments %}
+                <form method="POST" action="/admin/games/delete/{{ game.id }}" style="display:inline;">
+                    <button type="submit" class="btn-small btn-danger" onclick="return confirm('Are you sure you want to delete this game?')">Delete</button>
+                </form>
+                {% elif game.is_active and (game.leagues or game.tournaments) %}
+                <form method="POST" action="/admin/games/delete/{{ game.id }}" style="display:inline;">
+                    <button type="submit" class="btn-small btn-secondary" onclick="return confirm('Game is in use. Deactivate instead?')">Deactivate</button>
+                </form>
+                {% else %}
+                <span class="text-muted">-</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No games found. Create one to get started!</p>
+{% endif %}
+
+<p><a href="/admin/users">← Back to Admin</a></p>
+{% endblock %}

@@ -16,7 +16,10 @@ class User(db.Model):
 class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    platform = db.Column(db.String(50), nullable=False)
+    platform = db.Column(db.String(50), nullable=True)
+    max_players = db.Column(db.Integer, nullable=True)
+    allow_tournament = db.Column(db.Boolean, default=True)
+    allow_league = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True)
 
 class Player(db.Model):
