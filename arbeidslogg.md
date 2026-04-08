@@ -91,5 +91,18 @@ cd /home/teiteland/spillturneringogliga
 sqlite3 instance/gaming_liga.db "UPDATE user SET is_admin = 1 WHERE username = 'Teiteland';"
 Deretter vil Teiteland ha admin-tilgang og kunne se alle Mario Kart-spillere og alle admin-funksjoner.
 ---
+---
+Ferdig! Alt er oppdatert og pushet til git.
+Oppdateringer:
+- AGENTS.md - lagt til owner_id og unique_id i Leagues-table, oppdatert feature-beskrivelser
+- README.md - oppdatert med owner system-dokumentasjon
+- Git commit + push
+Ha en fin dag! 🌙
+
+---
+  Session   Project kickoff: AGENTS.md for Mario Kart 8 tourn…
+  Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
+
+---
 
 

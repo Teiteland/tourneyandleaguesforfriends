@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Match - Tournament{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2>Match Result</h2>
+    <p><a href="/tournaments/{{ tournament.id }}">Back to {{ tournament.name }}</a></p>
+    <p><strong>Bracket:</strong> {{ match.bracket|title }} | <strong>Round:</strong> {{ match.round_number }}</p>
+    
+    <div class="match-display">
+        <div class="match-player">
+            <a href="/players/{{ match.player1_id }}">{{ match.player1.name if match.player1 else 'TBD' }}</a>
+        </div>
+        <div class="match-vs">vs</div>
+        <div class="match-player">
+            <a href="/players/{{ match.player2_id }}">{{ match.player2.name if match.player2 else 'TBD' }}</a>
+        </div>
+    </div>
+    
+    {% if match.winner_id %}
+    <div class="match-score-display" style="text-align: center; margin-bottom: 2rem; font-size: 1.5rem;">
+        <strong>{{ match.score1 }} - {{ match.score2 }}</strong>
+    </div>
+    <div class="alert alert-success">Winner: {{ match.winner.name }}</div>
+    {% endif %}
+    
+    {% if can_manage and not match.winner_id %}
+    <form method="POST" class="result-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="score1">{{ match.player1.name if match.player1 else 'Player 1' }} Score</label>
+                <input type="number" id="score1" name="score1" min="0" value="{{ match.score1 or '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="score2">{{ match.player2.name if match.player2 else 'Player 2' }} Score</label>
+                <input type="number" id="score2" name="score2" min="0" value="{{ match.score2 or '' }}" required>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary" onclick="return confirm('Are you sure you want to save this result?')">Save Result</button>
+    </form>
+    {% elif not can_manage %}
+    <div class="alert alert-error">You do not have permission to manage this tournament.</div>
+    {% endif %}
+</div>
+{% endblock %}

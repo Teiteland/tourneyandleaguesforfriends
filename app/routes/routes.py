@@ -1,8 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from app.models.models import db, League, LeagueRound, Match, Player, Game, User
+from app.models.models import db, League, LeagueRound, Match, Player, Game, User, Tournament, TournamentMatch, TournamentPlayer
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import uuid
+import math
 
 main = Blueprint('main', __name__)
 
@@ -12,6 +13,13 @@ def can_manage_league(league_id):
         return True
     league = League.query.get(league_id)
     return league and league.owner_id == session.get('user_id')
+
+def can_manage_tournament(tournament_id):
+    """Check if current user can manage the tournament (admin or owner)."""
+    if session.get('is_admin'):
+        return True
+    tournament = Tournament.query.get(tournament_id)
+    return tournament and tournament.owner_id == session.get('user_id')
 
 def can_view_league(league_id):
     """Check if current user can view the league."""
@@ -25,8 +33,9 @@ def can_view_league(league_id):
 @main.route('/')
 def index():
     leagues = League.query.order_by(League.created_at.desc()).all()
+    tournaments = Tournament.query.order_by(Tournament.created_at.desc()).all()
     default_theme = 'dark'
-    return render_template('index.html', leagues=leagues, default_theme=default_theme)
+    return render_template('index.html', leagues=leagues, tournaments=tournaments, default_theme=default_theme)
 
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -694,3 +703,361 @@ def calculate_standings(league_id):
         s['position'] = i + 1
     
     return sorted_standings
+
+@main.route('/tournaments')
+def tournaments():
+    all_tournaments = Tournament.query.order_by(Tournament.created_at.desc()).all()
+    return render_template('tournaments.html', tournaments=all_tournaments)
+
+@main.route('/tournaments/create', methods=['GET', 'POST'])
+def create_tournament():
+    if not session.get('user_id'):
+        flash('Please log in to create a tournament', 'error')
+        return redirect(url_for('main.login'))
+    
+    games = Game.query.all()
+    players = Player.query.all()
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        game_id = request.form.get('game_id')
+        format_type = request.form.get('format')
+        best_of = request.form.get('best_of')
+        selected_players = request.form.getlist('players')
+        
+        if not name or not game_id or not format_type:
+            flash('Name, game, and format are required', 'error')
+            return render_template('create_tournament.html', games=games, players=players)
+        
+        if len(selected_players) < 2:
+            flash('At least 2 players are required', 'error')
+            return render_template('create_tournament.html', games=games, players=players)
+        
+        tournament = Tournament(
+            name=name,
+            game_id=game_id,
+            owner_id=session['user_id'],
+            unique_id=uuid.uuid4().hex[:12],
+            format=format_type,
+            best_of=int(best_of) if best_of else 1
+        )
+        db.session.add(tournament)
+        db.session.flush()
+        
+        for i, player_id in enumerate(selected_players):
+            tp = TournamentPlayer(
+                tournament_id=tournament.id,
+                player_id=int(player_id),
+                seed_number=i + 1
+            )
+            db.session.add(tp)
+        
+        db.session.commit()
+        flash(f'Tournament "{name}" created successfully!', 'success')
+        return redirect(url_for('main.tournament', tournament_id=tournament.id))
+    
+    return render_template('create_tournament.html', games=games, players=players)
+
+@main.route('/tournaments/<int:tournament_id>')
+def tournament(tournament_id):
+    tournament = Tournament.query.get_or_404(tournament_id)
+    tournament_players = TournamentPlayer.query.filter_by(tournament_id=tournament_id).all()
+    
+    winners_matches = TournamentMatch.query.filter_by(
+        tournament_id=tournament_id, bracket='winners'
+    ).order_by(TournamentMatch.round_number, TournamentMatch.match_number).all()
+    
+    losers_matches = TournamentMatch.query.filter_by(
+        tournament_id=tournament_id, bracket='losers'
+    ).order_by(TournamentMatch.round_number, TournamentMatch.match_number).all()
+    
+    grand_finals = TournamentMatch.query.filter_by(
+        tournament_id=tournament_id, bracket='grand_finals'
+    ).first()
+    
+    matches_by_round = {}
+    for match in winners_matches:
+        if match.round_number not in matches_by_round:
+            matches_by_round[match.round_number] = []
+        matches_by_round[match.round_number].append(match)
+    
+    losers_matches_by_round = {}
+    for match in losers_matches:
+        if match.round_number not in losers_matches_by_round:
+            losers_matches_by_round[match.round_number] = []
+        losers_matches_by_round[match.round_number].append(match)
+    
+    can_manage = can_manage_tournament(tournament_id)
+    
+    return render_template('tournament.html', 
+                         tournament=tournament, 
+                         tournament_players=tournament_players,
+                         matches_by_round=matches_by_round,
+                         losers_matches_by_round=losers_matches_by_round,
+                         grand_finals=grand_finals,
+                         can_manage=can_manage)
+
+@main.route('/tournaments/<int:tournament_id>/start', methods=['POST'])
+def start_tournament(tournament_id):
+    if not can_manage_tournament(tournament_id):
+        flash('You do not have permission to manage this tournament', 'error')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    tournament = Tournament.query.get_or_404(tournament_id)
+    
+    if tournament.status != 'draft':
+        flash('Tournament has already started', 'error')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    tournament_players = TournamentPlayer.query.filter_by(tournament_id=tournament_id).all()
+    player_count = len(tournament_players)
+    
+    if player_count < 2:
+        flash('At least 2 players are required', 'error')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    if tournament.format == 'single_elimination':
+        generate_single_elimination_bracket(tournament, tournament_players)
+    else:
+        generate_double_elimination_bracket(tournament, tournament_players)
+    
+    tournament.status = 'active'
+    tournament.started_at = datetime.utcnow()
+    db.session.commit()
+    
+    flash(f'Tournament "{tournament.name}" has started!', 'success')
+    return redirect(url_for('main.tournament', tournament_id=tournament_id))
+
+@main.route('/tournaments/<int:tournament_id>/match/<int:match_id>', methods=['GET', 'POST'])
+def tournament_match(tournament_id, match_id):
+    tournament = Tournament.query.get_or_404(tournament_id)
+    match = TournamentMatch.query.get_or_404(match_id)
+    
+    can_manage = can_manage_tournament(tournament_id)
+    is_completed = match.winner_id is not None
+    
+    if request.method == 'POST' and can_manage and not is_completed:
+        score1 = request.form.get('score1')
+        score2 = request.form.get('score2')
+        
+        if score1 is not None and score2 is not None:
+            match.score1 = int(score1)
+            match.score2 = int(score2)
+            
+            if match.score1 > match.score2:
+                match.winner_id = match.player1_id
+            elif match.score2 > match.score1:
+                match.winner_id = match.player2_id
+            
+            match.played_at = datetime.utcnow()
+            db.session.commit()
+            
+            advance_winner(match)
+            
+            if tournament.format == 'double_elimination' and match.bracket in ['winners', 'losers']:
+                move_loser_to_losers_bracket(match)
+            
+            check_tournament_completion(tournament)
+            
+            flash('Match result saved!', 'success')
+            return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    return render_template('tournament_match.html', tournament=tournament, match=match, can_manage=can_manage)
+
+def generate_single_elimination_bracket(tournament, tournament_players):
+    player_count = len(tournament_players)
+    bracket_size = 1
+    while bracket_size < player_count:
+        bracket_size *= 2
+    
+    rounds = int(math.log2(bracket_size))
+    matches_in_round = bracket_size // 2
+    
+    first_round_matches = []
+    for i in range(matches_in_round):
+        match = TournamentMatch(
+            tournament_id=tournament.id,
+            bracket='winners',
+            round_number=1,
+            match_number=i + 1
+        )
+        db.session.add(match)
+        db.session.flush()
+        first_round_matches.append(match)
+    
+    for i, tp in enumerate(tournament_players[:bracket_size]):
+        match_idx = i // 2
+        if i % 2 == 0:
+            first_round_matches[match_idx].player1_id = tp.player_id
+        else:
+            first_round_matches[match_idx].player2_id = tp.player_id
+    
+    for i in range(matches_in_round):
+        if first_round_matches[i].player1_id and first_round_matches[i].player2_id:
+            continue
+        elif first_round_matches[i].player1_id:
+            first_round_matches[i].winner_id = first_round_matches[i].player1_id
+            first_round_matches[i].is_bye = True
+        elif first_round_matches[i].player2_id:
+            first_round_matches[i].winner_id = first_round_matches[i].player2_id
+            first_round_matches[i].is_bye = True
+    
+    next_match_idx = 0
+    for round_num in range(2, rounds + 1):
+        matches_in_round = bracket_size // (2 ** round_num)
+        round_matches = []
+        for i in range(matches_in_round):
+            match = TournamentMatch(
+                tournament_id=tournament.id,
+                bracket='winners',
+                round_number=round_num,
+                match_number=i + 1
+            )
+            db.session.add(match)
+            db.session.flush()
+            round_matches.append(match)
+        
+        for i in range(matches_in_round):
+            match1_idx = next_match_idx + i * 2
+            match2_idx = next_match_idx + i * 2 + 1
+            
+            prev_match1 = first_round_matches[match1_idx] if round_num == 2 else round_matches[(i * 2)]
+            prev_match2 = first_round_matches[match2_idx] if round_num == 2 else round_matches[(i * 2) + 1]
+            
+            round_matches[i].next_match_id = None
+        
+        first_round_matches = round_matches
+        next_match_idx = 0
+    
+    link_matches_in_bracket(tournament, 'winners')
+
+def generate_double_elimination_bracket(tournament, tournament_players):
+    player_count = len(tournament_players)
+    bracket_size = 1
+    while bracket_size < player_count:
+        bracket_size *= 2
+    
+    winners_rounds = int(math.log2(bracket_size))
+    losers_rounds = winners_rounds * 2 - 1
+    
+    generate_single_elimination_bracket(tournament, tournament_players)
+    
+    for round_num in range(1, losers_rounds + 1):
+        matches_in_round = bracket_size // (2 ** ((round_num + 1) // 2 + 1))
+        if matches_in_round < 1:
+            matches_in_round = 1
+        
+        for i in range(matches_in_round):
+            match = TournamentMatch(
+                tournament_id=tournament.id,
+                bracket='losers',
+                round_number=round_num,
+                match_number=i + 1
+            )
+            db.session.add(match)
+    
+    grand_finals = TournamentMatch(
+        tournament_id=tournament.id,
+        bracket='grand_finals',
+        round_number=1,
+        match_number=1
+    )
+    db.session.add(grand_finals)
+    
+    link_matches_in_bracket(tournament, 'winners')
+    link_matches_in_bracket(tournament, 'losers')
+
+def link_matches_in_bracket(tournament, bracket_type):
+    matches = TournamentMatch.query.filter_by(
+        tournament_id=tournament.id, bracket=bracket_type
+    ).order_by(TournamentMatch.round_number, TournamentMatch.match_number).all()
+    
+    if not matches:
+        return
+    
+    rounds = {}
+    for match in matches:
+        if match.round_number not in rounds:
+            rounds[match.round_number] = []
+        rounds[match.round_number].append(match)
+    
+    for round_num in sorted(rounds.keys())[:-1]:
+        current_round = rounds[round_num]
+        next_round = rounds[round_num + 1]
+        
+        for i, match in enumerate(current_round):
+            if len(next_round) > i // 2:
+                match.next_match_id = next_round[i // 2].id
+
+def advance_winner(match):
+    if not match.next_match_id:
+        return
+    
+    next_match = TournamentMatch.query.get(match.next_match_id)
+    if not next_match:
+        return
+    
+    if next_match.player1_id is None:
+        next_match.player1_id = match.winner_id
+    elif next_match.player2_id is None:
+        next_match.player2_id = match.winner_id
+    
+    db.session.commit()
+
+def move_loser_to_losers_bracket(match):
+    if not match.loser_next_match_id:
+        return
+    
+    loser_id = match.player1_id if match.winner_id == match.player2_id else match.player2_id
+    if not loser_id:
+        return
+    
+    loser_match = TournamentMatch.query.get(match.loser_next_match_id)
+    if not loser_match:
+        return
+    
+    if loser_match.player1_id is None:
+        loser_match.player1_id = loser_id
+    elif loser_match.player2_id is None:
+        loser_match.player2_id = loser_id
+    
+    db.session.commit()
+
+def check_tournament_completion(tournament):
+    if tournament.status != 'active':
+        return
+    
+    if tournament.format == 'single_elimination':
+        final_match = TournamentMatch.query.filter_by(
+            tournament_id=tournament.id, bracket='winners'
+        ).order_by(TournamentMatch.round_number.desc()).first()
+        
+        if final_match and final_match.winner_id:
+            tournament.status = 'completed'
+            tournament.ended_at = datetime.utcnow()
+            
+            winner_tp = TournamentPlayer.query.filter_by(
+                tournament_id=tournament.id, player_id=final_match.winner_id
+            ).first()
+            if winner_tp:
+                winner_tp.placement = 1
+            
+            db.session.commit()
+    else:
+        grand_finals = TournamentMatch.query.filter_by(
+            tournament_id=tournament.id, bracket='grand_finals'
+        ).first()
+        
+        if grand_finals and grand_finals.winner_id:
+            tournament.status = 'completed'
+            tournament.ended_at = datetime.utcnow()
+            
+            winner_tp = TournamentPlayer.query.filter_by(
+                tournament_id=tournament.id, player_id=grand_finals.winner_id
+            ).first()
+            if winner_tp:
+                winner_tp.placement = 1
+            
+            db.session.commit()
+
+import math

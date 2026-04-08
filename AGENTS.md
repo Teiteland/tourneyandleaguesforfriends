@@ -171,19 +171,83 @@
 11. Bowser
 12. Bowser Jr.
 
-## Phase 2: Authentication (Future)
+## Phase 2: Authentication (Implemented)
 
-- Real user registration with email + password + confirm password
-- Email verification with confirmation link
-- Password hashing (bcrypt/argon2)
+- User registration with email + password + confirm password
+- Password hashing (bcrypt)
 - Login with email + password
+- Account lockout after 5 failed login attempts
+- Admin can unlock accounts and reset passwords
+- Users can change their own password
 
-## Phase 3: Tournament System (Future)
+## Phase 3: Tournament System (Current)
 
-- Single elimination bracket
-- Double elimination with losers bracket
-- Auto bracket selection based on player count
-- Support for 4, 8, 16, 32, 64 players
+### Features
+
+1. **Tournament Creation**
+   - Single elimination bracket
+   - Double elimination with winners + losers bracket
+   - Support for any number of players (auto-handles byes)
+   - Recommended: 4, 8, 16, 32, 64 players
+   - Grand finals: Best of 1 or Best of 3 (configurable by owner)
+   - Owner system: creator + admin can manage
+
+2. **Bracket Generation**
+   - Automatic bye handling for odd player counts
+   - Winners bracket (single elimination standard)
+   - Losers bracket (double elimination)
+   - Grand finals for double elimination
+
+3. **Match Management**
+   - Manual result entry
+   - Automatic winner advancement
+   - Loser moves to losers bracket (double elimination)
+   - Tournament completion detection
+
+### Database Schema
+
+#### Tournament Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | Primary key |
+| name | TEXT | Tournament name |
+| game_id | INTEGER | Foreign key to Games |
+| owner_id | INTEGER | Foreign key to Users |
+| unique_id | TEXT | Unique identifier (12 chars) |
+| format | TEXT | single_elimination/double_elimination |
+| best_of | INTEGER | 1 or 3 for grand finals |
+| status | TEXT | draft/active/completed |
+| created_at | DATETIME | Creation timestamp |
+| started_at | DATETIME | Start timestamp |
+| ended_at | DATETIME | End timestamp |
+
+#### TournamentPlayer Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | Primary key |
+| tournament_id | INTEGER | Foreign key to Tournaments |
+| player_id | INTEGER | Foreign key to Players |
+| seed_number | INTEGER | Seed position |
+| eliminated | BOOLEAN | Eliminated status |
+| placement | INTEGER | Final placement |
+
+#### TournamentMatch Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | Primary key |
+| tournament_id | INTEGER | Foreign key to Tournaments |
+| bracket | TEXT | winners/losers/grand_finals |
+| round_number | INTEGER | Round in bracket |
+| match_number | INTEGER | Match within round |
+| player1_id | INTEGER | Foreign key to Players |
+| player2_id | INTEGER | Foreign key to Players |
+| winner_id | INTEGER | Foreign key to Players |
+| score1 | INTEGER | Player 1 score |
+| score2 | INTEGER | Player 2 score |
+| is_bye | BOOLEAN | Bye match |
+| next_match_id | INTEGER | Next match (winner) |
+| loser_next_match_id | INTEGER | Next match (loser) |
+| played_at | DATETIME | Match timestamp |
 
 ## Phase 4: Extensibility (Future)
 

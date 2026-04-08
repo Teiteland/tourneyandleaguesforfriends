@@ -16,4 +16,24 @@
     {% endfor %}
 </div>
 {% endif %}
+
+{% if tournaments %}
+<h3>Recent Tournaments</h3>
+<div class="tournaments-list">
+    {% for tournament in tournaments[:3] %}
+    <div class="tournament-card">
+        <h3><a href="/tournaments/{{ tournament.id }}">{{ tournament.name }}</a></h3>
+        <p class="tournament-game">{{ tournament.game.name if tournament.game else 'No game' }}</p>
+        <p class="tournament-format">
+            {% if tournament.format == 'single_elimination' %}
+                Single Elimination
+            {% else %}
+                Double Elimination
+            {% endif %}
+        </p>
+        <p class="tournament-status status-{{ tournament.status }}">{{ tournament.status }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 {% endblock %}

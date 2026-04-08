@@ -63,3 +63,50 @@ class Match(db.Model):
     round = db.relationship('LeagueRound', backref='matches')
     home_player = db.relationship('Player', foreign_keys=[home_player_id])
     away_player = db.relationship('Player', foreign_keys=[away_player_id])
+
+class Tournament(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    unique_id = db.Column(db.String(20), unique=True, nullable=True)
+    format = db.Column(db.String(20), default='single_elimination')  # single_elimination, double_elimination
+    best_of = db.Column(db.Integer, default=1)  # 1 for single game, 3 for best of 3 in grand finals
+    status = db.Column(db.String(20), default='draft')  # draft, active, completed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    started_at = db.Column(db.DateTime, nullable=True)
+    ended_at = db.Column(db.DateTime, nullable=True)
+    game = db.relationship('Game', backref='tournaments')
+    owner = db.relationship('User', backref='owned_tournaments')
+
+class TournamentPlayer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.id'))
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    seed_number = db.Column(db.Integer, nullable=True)
+    eliminated = db.Column(db.Boolean, default=False)
+    placement = db.Column(db.Integer, nullable=True)
+    tournament = db.relationship('Tournament', backref='tournament_players')
+    player = db.relationship('Player', backref='tournament_participations')
+
+class TournamentMatch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.id'))
+    bracket = db.Column(db.String(20), default='winners')  # winners, losers, grand_finals
+    round_number = db.Column(db.Integer, nullable=False)  # Round in bracket (1 = first round)
+    match_number = db.Column(db.Integer, nullable=False)  # Match within the round
+    player1_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=True)
+    player2_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=True)
+    winner_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=True)
+    score1 = db.Column(db.Integer, nullable=True)
+    score2 = db.Column(db.Integer, nullable=True)
+    is_bye = db.Column(db.Boolean, default=False)
+    next_match_id = db.Column(db.Integer, db.ForeignKey('tournament_match.id'), nullable=True)
+    loser_next_match_id = db.Column(db.Integer, db.ForeignKey('tournament_match.id'), nullable=True)
+    played_at = db.Column(db.DateTime, nullable=True)
+    tournament = db.relationship('Tournament', backref='matches')
+    player1 = db.relationship('Player', foreign_keys=[player1_id])
+    player2 = db.relationship('Player', foreign_keys=[player2_id])
+    winner = db.relationship('Player', foreign_keys=[winner_id])
+    next_match = db.relationship('TournamentMatch', foreign_keys=[next_match_id], remote_side=[id])
+    loser_next_match = db.relationship('TournamentMatch', foreign_keys=[loser_next_match_id], remote_side=[id])

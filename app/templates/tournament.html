@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}{{ tournament.name }} - Tournament{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{{ tournament.name }}</h2>
+    <p class="tournament-game">Game: {{ tournament.game.name if tournament.game else 'N/A' }}</p>
+    <p class="tournament-format">
+        {% if tournament.format == 'single_elimination' %}
+            Single Elimination
+        {% else %}
+            Double Elimination
+        {% endif %}
+    </p>
+    <p class="tournament-status status-{{ tournament.status }}">{{ tournament.status }}</p>
+    {% if tournament.owner %}
+    <p class="tournament-owner">Owner: {{ tournament.owner.username }}</p>
+    {% endif %}
+</div>
+
+{% if tournament.status == 'draft' and can_manage %}
+<div class="tournament-actions">
+    <form method="POST" action="/tournaments/{{ tournament.id }}/start">
+        <button type="submit" class="btn-primary" onclick="return confirm('Are you sure you want to start the tournament? This will generate the bracket.')">Start Tournament</button>
+    </form>
+</div>
+{% endif %}
+
+<section class="players-section">
+    <h3>Players ({{ tournament_players|length }})</h3>
+    <div class="players-list">
+        {% for tp in tournament_players %}
+            <span class="player-tag">{{ tp.player.name }}{% if tp.seed_number %} (#{{ tp.seed_number }}){% endif %}</span>
+        {% endfor %}
+    </div>
+</section>
+
+{% if tournament.status != 'draft' %}
+<section class="bracket-section">
+    <h3>Winners Bracket</h3>
+    <div class="bracket-container vertical">
+        {% for round_num, matches in matches_by_round.items() %}
+        <div class="bracket-round">
+            <h4>Round {{ round_num }}</h4>
+            <div class="bracket-matches">
+                {% for match in matches %}
+                <div class="bracket-match {% if match.winner_id %}completed{% endif %}">
+                    <div class="match-player {% if match.winner_id == match.player1_id %}winner{% endif %}">
+                        {% if match.player1 %}
+                            <a href="/players/{{ match.player1_id }}">{{ match.player1.name }}</a>
+                        {% else %}
+                            <em>TBD</em>
+                        {% endif %}
+                    </div>
+                    <div class="match-score">
+                        {% if match.score1 is not none %}{{ match.score1 }}{% else %}-{% endif %}
+                    </div>
+                    <div class="match-player {% if match.winner_id == match.player2_id %}winner{% endif %}">
+                        {% if match.player2 %}
+                            <a href="/players/{{ match.player2_id }}">{{ match.player2.name }}</a>
+                        {% else %}
+                            <em>TBD</em>
+                        {% endif %}
+                    </div>
+                    <div class="match-score">
+                        {% if match.score2 is not none %}{{ match.score2 }}{% else %}-{% endif %}
+                    </div>
+                    {% if can_manage and not match.winner_id and match.player1_id and match.player2_id %}
+                    <a href="/tournaments/{{ tournament.id }}/match/{{ match.id }}" class="btn-small">Enter Result</a>
+                    {% elif match.winner_id %}
+                    <span class="match-result">Winner: {{ match.winner.name }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+{% if tournament.format == 'double_elimination' and losers_matches_by_round %}
+<section class="bracket-section">
+    <h3>Losers Bracket</h3>
+    <div class="bracket-container vertical">
+        {% for round_num, matches in losers_matches_by_round.items() %}
+        <div class="bracket-round">
+            <h4>Losers Round {{ round_num }}</h4>
+            <div class="bracket-matches">
+                {% for match in matches %}
+                <div class="bracket-match {% if match.winner_id %}completed{% endif %}">
+                    <div class="match-player {% if match.winner_id == match.player1_id %}winner{% endif %}">
+                        {% if match.player1 %}
+                            <a href="/players/{{ match.player1_id }}">{{ match.player1.name }}</a>
+                        {% else %}
+                            <em>TBD</em>
+                        {% endif %}
+                    </div>
+                    <div class="match-score">
+                        {% if match.score1 is not none %}{{ match.score1 }}{% else %}-{% endif %}
+                    </div>
+                    <div class="match-player {% if match.winner_id == match.player2_id %}winner{% endif %}">
+                        {% if match.player2 %}
+                            <a href="/players/{{ match.player2_id }}">{{ match.player2.name }}</a>
+                        {% else %}
+                            <em>TBD</em>
+                        {% endif %}
+                    </div>
+                    <div class="match-score">
+                        {% if match.score2 is not none %}{{ match.score2 }}{% else %}-{% endif %}
+                    </div>
+                    {% if can_manage and not match.winner_id and match.player1_id and match.player2_id %}
+                    <a href="/tournaments/{{ tournament.id }}/match/{{ match.id }}" class="btn-small">Enter Result</a>
+                    {% elif match.winner_id %}
+                    <span class="match-result">Winner: {{ match.winner.name }}</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if grand_finals %}
+<section class="bracket-section">
+    <h3>Grand Finals</h3>
+    <div class="bracket-container vertical">
+        <div class="bracket-round">
+            <div class="bracket-matches">
+                <div class="bracket-match grand-finals {% if grand_finals.winner_id %}completed{% endif %}">
+                    <div class="match-player {% if grand_finals.winner_id == grand_finals.player1_id %}winner{% endif %}">
+                        {% if grand_finals.player1 %}
+                            <a href="/players/{{ grand_finals.player1_id }}">{{ grand_finals.player1.name }}</a>
+                        {% else %}
+                            <em>TBD</em>
+                        {% endif %}
+                    </div>
+                    <div class="match-score">
+                        {% if grand_finals.score1 is not none %}{{ grand_finals.score1 }}{% else %}-{% endif %}
+                    </div>
+                    <div class="match-player {% if grand_finals.winner_id == grand_finals.player2_id %}winner{% endif %}">
+                        {% if grand_finals.player2 %}
+                            <a href="/players/{{ grand_finals.player2_id }}">{{ grand_finals.player2.name }}</a>
+                        {% else %}
+                            <em>TBD</em>
+                        {% endif %}
+                    </div>
+                    <div class="match-score">
+                        {% if grand_finals.score2 is not none %}{{ grand_finals.score2 }}{% else %}-{% endif %}
+                    </div>
+                    {% if can_manage and not grand_finals.winner_id and grand_finals.player1_id and grand_finals.player2_id %}
+                    <a href="/tournaments/{{ tournament.id }}/match/{{ grand_finals.id }}" class="btn-small">Enter Result</a>
+                    {% elif grand_finals.winner_id %}
+                    <span class="match-result champion">🏆 Winner: {{ grand_finals.winner.name }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endif %}
+
+<style>
+.bracket-container.vertical {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    overflow-x: auto;
+    padding: 1rem 0;
+}
+
+.bracket-round {
+    min-width: 200px;
+}
+
+.bracket-round h4 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.bracket-matches {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    gap: 1rem;
+}
+
+.bracket-match {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.5rem;
+    background: var(--card-bg);
+}
+
+.bracket-match.completed {
+    opacity: 0.7;
+}
+
+.bracket-match .match-player {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+}
+
+.bracket-match .match-player.winner {
+    font-weight: bold;
+    color: var(--success-color);
+}
+
+.bracket-match .match-score {
+    text-align: center;
+    font-weight: bold;
+}
+
+.bracket-match .match-result {
+    display: block;
+    text-align: center;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.bracket-match .match-result.champion {
+    color: var(--success-color);
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.bracket-match.grand-finals {
+    border-color: var(--primary-color);
+    border-width: 2px;
+}
+
+.players-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.player-tag {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.tournament-actions {
+    margin-bottom: 1.5rem;
+}
+</style>
+{% endblock %}

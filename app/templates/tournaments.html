@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Tournaments - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Tournaments</h2>
+    {% if session.get('user_id') %}
+        <a href="/tournaments/create" class="btn-primary">Create Tournament</a>
+    {% endif %}
+</div>
+
+{% if tournaments %}
+    <div class="tournaments-list">
+        {% for tournament in tournaments %}
+            <div class="tournament-card">
+                <h3><a href="/tournaments/{{ tournament.id }}">{{ tournament.name }}</a></h3>
+                <p class="tournament-game">{{ tournament.game.name if tournament.game else 'No game' }}</p>
+                <p class="tournament-format">Format: 
+                    {% if tournament.format == 'single_elimination' %}
+                        Single Elimination
+                    {% else %}
+                        Double Elimination
+                    {% endif %}
+                </p>
+                <p class="tournament-status status-{{ tournament.status }}">{{ tournament.status }}</p>
+                <p class="tournament-date">Created: {{ tournament.created_at.strftime('%Y-%m-%d') }}</p>
+                {% if tournament.owner %}
+                <p class="tournament-owner">Owner: {{ tournament.owner.username }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No tournaments yet. Create one to get started!</p>
+{% endif %}
+{% endblock %}
