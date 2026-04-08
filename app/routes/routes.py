@@ -181,6 +181,15 @@ def admin_users():
     users = User.query.order_by(User.created_at.desc()).all()
     return render_template('admin_users.html', users=users)
 
+@main.route('/debug/users')
+def debug_users():
+    """Debug route to see all users - for troubleshooting only"""
+    users = User.query.order_by(User.id).all()
+    result = []
+    for u in users:
+        result.append(f"ID: {u.id}, Username: {u.username}, Email: {u.email}, Admin: {u.is_admin}")
+    return "<br>".join(result) if result else "No users found"
+
 @main.route('/admin/unlock/<int:user_id>')
 def admin_unlock(user_id):
     if not session.get('is_admin'):
