@@ -69,9 +69,11 @@ The application will be available at `http://127.0.0.1:5000`
    pip install -r requirements.txt
    ```
 3. Create a `.env` file in the project root (copy from `.env.example` if available)
-4. Initialize the database:
+4. Initialize the database and migrations:
    ```bash
-   flask init-db
+   flask db init
+   flask db migrate -m "Initial migration"
+   flask db upgrade
    ```
 5. (Optional) Seed test data:
    ```bash
@@ -81,6 +83,32 @@ The application will be available at `http://127.0.0.1:5000`
    ```bash
    flask run
    ```
+
+## Database Migrations
+
+When you make changes to the database models, you need to create and apply migrations:
+
+1. **Create a migration** (after changing models):
+   ```bash
+   flask db migrate -m "Description of changes"
+   ```
+
+2. **Apply migrations** (to update the database):
+   ```bash
+   flask db upgrade
+   ```
+
+3. **Rollback** (if something goes wrong):
+   ```bash
+   flask db downgrade
+   ```
+
+4. **Check current migration status**:
+   ```bash
+   flask db current
+   ```
+
+**Important:** Never edit the migration files manually unless you know what you're doing. Let Flask-Migrate generate them automatically.
 
 ## Admin Access
 

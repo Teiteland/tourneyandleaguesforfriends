@@ -34,11 +34,11 @@ def init_db():
             game = Game(**game_data)
             db.session.add(game)
     
-    admin = User.query.filter_by(email='admin@example.com').first()
+    admin = User.query.filter_by(email='even.teigland@gmail.com').first()
     if not admin:
         admin = User(
-            username='Admin',
-            email='admin@example.com',
+            username='Teiteland',
+            email='even.teigland@gmail.com',
             password_hash=generate_password_hash('admin123'),
             is_admin=True,
             created_at=datetime.utcnow()

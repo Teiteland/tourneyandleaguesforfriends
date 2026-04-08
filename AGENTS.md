@@ -10,7 +10,7 @@
 ## Tech Stack
 
 - **Backend:** Python 3.x + Flask
-- **Database:** SQLite (architected for future migration)
+- **Database:** SQLite with Flask-Migrate (Alembic)
 - **Frontend:** HTML5, CSS3, Vanilla JavaScript
 - **Testing:** pytest
 - **Configuration:** Environment variables (.env)
