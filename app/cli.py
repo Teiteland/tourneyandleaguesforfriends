@@ -44,6 +44,12 @@ def init_db():
             created_at=datetime.utcnow()
         )
         db.session.add(admin)
+    else:
+        admin.username = 'Teiteland'
+        admin.password_hash = generate_password_hash('admin123')
+        admin.is_admin = True
+    
+    db.session.commit()
     
     test_user = User.query.filter_by(email='bruker@example.com').first()
     if not test_user:
@@ -55,6 +61,10 @@ def init_db():
             created_at=datetime.utcnow()
         )
         db.session.add(test_user)
+    else:
+        test_user.username = 'bruker'
+        test_user.password_hash = generate_password_hash('bruker123')
+        test_user.is_admin = False
     
     db.session.commit()
     click.echo('Database initialized with dummy players, games, and users.')

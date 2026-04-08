@@ -106,3 +106,20 @@ Ha en fin dag! 🌙
 ---
 
 
+Oppsummering
+Alt som er implementert nå:
+1. Flask-Migrate - for database-migrering
+2. Admin-bruker - Teiteland / even.teigland@gmail.com / admin123
+3. Mario Kart 8 Deluxe - allerede i spill-listen
+4. setup.sh - oppdatert med migrate-kommandoer
+Ved deploy til Render:
+pip install -r requirements.txt
+flask db init
+flask db migrate -m "Initial migration"
+flask db upgrade
+flask seed-data  # valgfritt
+Ved fremtidige endringer i koden:
+flask db migrate -m "Description"
+flask db upgrade
+
+---
