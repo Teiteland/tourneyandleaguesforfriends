@@ -32,6 +32,9 @@ def can_view_league(league_id):
 
 @main.route('/')
 def index():
+    if not session.get('user_id'):
+        return redirect(url_for('main.login'))
+    
     leagues = League.query.order_by(League.created_at.desc()).all()
     tournaments = Tournament.query.order_by(Tournament.created_at.desc()).all()
     default_theme = 'dark'
@@ -310,7 +313,8 @@ def games():
         return redirect(url_for('main.login'))
     
     all_games = Game.query.order_by(Game.name).all()
-    return render_template('games.html', games=all_games)
+    is_admin = session.get('is_admin')
+    return render_template('games.html', games=all_games, is_admin=is_admin)
 
 @main.route('/leagues')
 def leagues():
@@ -325,6 +329,8 @@ def create_league():
     
     games = Game.query.filter_by(allow_league=True, is_active=True).all()
     players = Player.query.all()
+    
+    pre_selected_game = request.args.get('game_id')
     
     if request.method == 'POST':
         name = request.form.get('name')
@@ -350,7 +356,7 @@ def create_league():
         flash(f'League "{name}" created successfully!', 'success')
         return redirect(url_for('main.league', league_id=league.id))
     
-    return render_template('create_league.html', games=games, players=players)
+    return render_template('create_league.html', games=games, players=players, pre_selected_game=pre_selected_game)
 
 @main.route('/leagues/<int:league_id>')
 def league(league_id):
@@ -802,6 +808,8 @@ def create_tournament():
     games = Game.query.filter_by(allow_tournament=True, is_active=True).all()
     players = Player.query.all()
     
+    pre_selected_game = request.args.get('game_id')
+    
     if request.method == 'POST':
         name = request.form.get('name')
         game_id = request.form.get('game_id')
@@ -840,7 +848,7 @@ def create_tournament():
         flash(f'Tournament "{name}" created successfully!', 'success')
         return redirect(url_for('main.tournament', tournament_id=tournament.id))
     
-    return render_template('create_tournament.html', games=games, players=players)
+    return render_template('create_tournament.html', games=games, players=players, pre_selected_game=pre_selected_game)
 
 @main.route('/tournaments/<int:tournament_id>')
 def tournament(tournament_id):

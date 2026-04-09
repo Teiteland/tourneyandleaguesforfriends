@@ -132,6 +132,19 @@ footer {
     margin-bottom: 2rem;
 }
 
+.quick-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.quick-links .btn-large {
+    flex: 1;
+    min-width: 140px;
+    max-width: 200px;
+}
+
 .form-container {
     max-width: 500px;
     margin: 0 auto;
@@ -171,7 +184,7 @@ footer {
 }
 
 .btn, .btn-primary, .btn-secondary {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: var(--text-color);
     padding: 0.75rem 1.5rem;
     border: none;
@@ -186,6 +199,14 @@ footer {
 
 .btn:hover, .btn-primary:hover, .btn-secondary:hover {
     opacity: 0.9;
+}
+
+.btn-large {
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    min-width: 150px;
+    text-align: center;
 }
 
 .btn-primary {

@@ -15,7 +15,7 @@
             <select id="game_id" name="game_id" required>
                 <option value="">Select a game</option>
                 {% for game in games %}
-                    <option value="{{ game.id }}">{{ game.name }} ({{ game.platform }})</option>
+                    <option value="{{ game.id }}" {% if pre_selected_game and pre_selected_game|int == game.id %}selected{% endif %}>{{ game.name }} ({{ game.platform }})</option>
                 {% endfor %}
             </select>
         </div>
