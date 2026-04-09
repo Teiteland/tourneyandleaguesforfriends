@@ -747,3 +747,171 @@ footer {
     color: var(--text-color);
     border: 1px solid var(--border-color);
 }
+
+/* ===== RESPONSIVE STYLES ===== */
+
+/* Mobile (max-width: 480px) */
+@media (max-width: 480px) {
+    /* Navigation */
+    nav {
+        padding: 0.5rem;
+    }
+    
+    nav h1 {
+        font-size: 1.2rem;
+    }
+    
+    nav ul {
+        gap: 0.5rem;
+    }
+    
+    nav a {
+        font-size: 0.9rem;
+        padding: 0.3rem 0.5rem;
+    }
+    
+    /* Quick links - home page */
+    .quick-links {
+        gap: 0.5rem;
+    }
+    
+    .quick-links .btn-large {
+        min-width: 100%;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+    
+    /* Page header */
+    .page-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    /* Tables - general scroll */
+    table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .games-table,
+    .admin-table,
+    .standings-table,
+    .history-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Forms */
+    .form-container {
+        padding: 1rem;
+        margin: 0.5rem;
+    }
+    
+    .form-row {
+        flex-direction: column;
+    }
+    
+    .form-row .form-group {
+        width: 100%;
+    }
+    
+    /* Buttons */
+    .btn, .btn-primary, .btn-secondary {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .btn-large {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        min-width: 100%;
+    }
+    
+    /* Match cards */
+    .match-card {
+        padding: 0.75rem;
+    }
+    
+    /* Round tabs */
+    .round-tabs {
+        gap: 0.5rem;
+    }
+    
+    .round-tab {
+        padding: 0.5rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Players grid */
+    .players-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Tablet (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    /* Quick links */
+    .quick-links {
+        gap: 0.75rem;
+    }
+    
+    .quick-links .btn-large {
+        min-width: 120px;
+        padding: 0.875rem 1.25rem;
+        font-size: 1.1rem;
+    }
+    
+    /* Tables with scroll */
+    table,
+    .games-table,
+    .admin-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Admin tables - hide less important columns */
+    .admin-table th:nth-child(3),
+    .admin-table td:nth-child(3),
+    .admin-table th:nth-child(4),
+    .admin-table td:nth-child(4),
+    .admin-table th:nth-child(7),
+    .admin-table td:nth-child(7) {
+        display: none;
+    }
+    
+    /* Form rows */
+    .form-row {
+        flex-wrap: wrap;
+    }
+    
+    .form-row .form-group {
+        min-width: 150px;
+        flex: 1;
+    }
+}
+
+/* Large tablet / small desktop (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .quick-links .btn-large {
+        min-width: 140px;
+    }
+    
+    /* Admin tables - hide one column */
+    .admin-table th:nth-child(7),
+    .admin-table td:nth-child(7) {
+        display: none;
+    }
+}
+
+/* Ensure tables are scrollable on mobile */
+@media (max-width: 768px) {
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-bottom: 1rem;
+    }
+}
