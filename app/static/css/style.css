@@ -1,7 +1,7 @@
 :root {
     --bg-color: #121212;
     --surface-color: #1e1e1e;
-    --primary-color: #90caf9;
+    --primary-color: #5c9ce6;
     --secondary-color: #03dac6;
     --text-color: #ffffff;
     --text-secondary: #d0d0d0;
@@ -210,7 +210,7 @@ footer {
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: var(--text-color);
     padding: 0.75rem 1.5rem;
     border: none;
@@ -224,10 +224,10 @@ footer {
 }
 
 .btn-secondary {
-    background-color: var(--surface-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: var(--text-color);
     padding: 0.75rem 1.5rem;
-    border: 1px solid var(--text-secondary);
+    border: none;
     border-radius: 4px;
     cursor: pointer;
     text-decoration: none;
@@ -237,9 +237,11 @@ footer {
 }
 
 .btn-primary:hover {
+    opacity: 0.9;
+}
 
 .btn-small {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: var(--text-color);
     padding: 0.4rem 0.8rem;
     border: none;
@@ -247,6 +249,11 @@ footer {
     cursor: pointer;
     text-decoration: none;
     font-size: 0.875rem;
+    display: inline-block;
+}
+
+.btn-small:hover {
+    opacity: 0.9;
 }
 
 .btn-danger {
