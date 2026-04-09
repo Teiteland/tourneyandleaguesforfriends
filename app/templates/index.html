@@ -4,6 +4,19 @@
 <h2>Welcome</h2>
 <p>Gaming league and tournament management system</p>
 
+<div class="quick-links">
+    <a href="/leagues" class="btn">Leagues</a>
+    <a href="/tournaments" class="btn">Tournaments</a>
+    <a href="/players" class="btn">Players</a>
+    <a href="/games" class="btn">Games</a>
+    {% if session.get('user_id') %}
+        <a href="/profile" class="btn">Profile</a>
+    {% endif %}
+    {% if session.get('is_admin') %}
+        <a href="/admin/games" class="btn btn-admin">Manage Games</a>
+    {% endif %}
+</div>
+
 {% if leagues %}
 <h3>Recent Leagues</h3>
 <div class="leagues-list">

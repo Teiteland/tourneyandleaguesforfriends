@@ -303,6 +303,15 @@ def admin_delete_game(game_id):
     
     return redirect(url_for('main.admin_games'))
 
+@main.route('/games')
+def games():
+    if not session.get('user_id'):
+        flash('Please log in to view games', 'error')
+        return redirect(url_for('main.login'))
+    
+    all_games = Game.query.order_by(Game.name).all()
+    return render_template('games.html', games=all_games)
+
 @main.route('/leagues')
 def leagues():
     all_leagues = League.query.order_by(League.created_at.desc()).all()

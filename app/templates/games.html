@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Games - Gaming Tournament & League{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Games</h2>
+</div>
+
+{% if games %}
+<table class="games-table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Platform</th>
+            <th>Max Players</th>
+            <th>Tournaments</th>
+            <th>Leagues</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for game in games %}
+        <tr class="{% if not game.is_active %}inactive{% endif %}">
+            <td class="{% if not game.is_active %}text-strikethrough{% endif %}">{{ game.name }}</td>
+            <td>{{ game.platform or '-' }}</td>
+            <td>{{ game.max_players or 'Unlimited' }}</td>
+            <td>{% if game.allow_tournament %}✓{% else %}✗{% endif %}</td>
+            <td>{% if game.allow_league %}✓{% else %}✗{% endif %}</td>
+            <td>
+                {% if game.is_active %}
+                <span class="badge badge-success">Active</span>
+                {% else %}
+                <span class="badge badge-inactive">Inactive</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No games found.</p>
+{% endif %}
+
+<style>
+.games-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.games-table th, .games-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.games-table th {
+    background: var(--card-bg);
+    font-weight: bold;
+}
+
+.games-table tr.inactive {
+    opacity: 0.6;
+}
+
+.games-table .text-strikethrough {
+    text-decoration: line-through;
+}
+
+.badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.badge-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.badge-inactive {
+    background: var(--text-muted);
+    color: var(--bg-color);
+}
+</style>
+{% endblock %}
