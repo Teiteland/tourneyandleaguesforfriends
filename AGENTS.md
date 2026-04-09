@@ -36,7 +36,7 @@
 .env               # Environment variables
 ```
 
-## Phase 1: League System (Current)
+## Phase 1: League System (Implemented)
 
 ### Features
 
@@ -69,7 +69,7 @@
    - Admin can manage ALL leagues
    - Owner transfer only via database
 
-4. **Player Statistics**
+5. **Player Statistics**
    - Wins, Draws, Losses
    - Goals For, Goals Against
    - Series Won (leagues won as first place)
@@ -77,21 +77,21 @@
    - Revenge Opportunity (last loss without subsequent win)
    - Next Matches (upcoming unplayed matches)
 
-5. **History Tracking**
+6. **History Tracking**
    - Per player history
    - Per tournament history
    - Per league round history
    - Per league history (all rounds for all players)
 
-6. **User Authentication**
+7. **User Authentication**
    - User registration with email and password
    - Password validation (8+ characters, letters and numbers)
-   - Login with email and password
+   - Login with email or username
    - Account lockout after 5 failed login attempts
    - Admin can unlock locked accounts
    - Admin can reset user passwords
    - Users can change their own password
-   - Admin account created via init-db
+   - Admin account created via `flask create-admin`
 
 ### Database Schema
 

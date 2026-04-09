@@ -8,6 +8,9 @@ A gaming league and tournament management system for competitive gaming.
 # Clone and setup in one command
 ./setup.sh
 
+# Create admin user (required after setup)
+flask create-admin
+
 # Start the server
 flask run
 ```
@@ -75,11 +78,16 @@ The application will be available at `http://127.0.0.1:5000`
    flask db migrate -m "Initial migration"
    flask db upgrade
    ```
-5. (Optional) Seed test data:
+5. Create admin user:
+   ```bash
+   flask create-admin
+   ```
+   Default admin: `Teiteland` / `admin123` (change password after first login)
+6. (Optional) Seed test data:
    ```bash
    flask seed-data
    ```
-6. Run the development server:
+7. Run the development server:
    ```bash
    flask run
    ```
