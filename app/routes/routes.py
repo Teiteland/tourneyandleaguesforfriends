@@ -312,9 +312,15 @@ def games():
         flash('Please log in to view games', 'error')
         return redirect(url_for('main.login'))
     
-    all_games = Game.query.order_by(Game.name).all()
     is_admin = session.get('is_admin')
-    return render_template('games.html', games=all_games, is_admin=is_admin)
+    show_all = request.args.get('show_all') == 'true'
+    
+    if is_admin and show_all:
+        all_games = Game.query.order_by(Game.name).all()
+    else:
+        all_games = Game.query.filter_by(is_active=True).order_by(Game.name).all()
+    
+    return render_template('games.html', games=all_games, is_admin=is_admin, show_all=show_all)
 
 @main.route('/leagues')
 def leagues():
