@@ -8,10 +8,11 @@
     <div>
         <a href="/leagues/create" class="btn btn-small">Create League</a>
         <a href="/tournaments/create" class="btn btn-small">Create Tournament</a>
+        <a href="/ffa/create" class="btn btn-small">Create FFA</a>
     </div>
 </div>
 
-{% if leagues or tournaments %}
+{% if leagues or tournaments or ffas %}
 {% if leagues %}
 <section class="my-leagues-section">
     <h3>My Leagues</h3>
@@ -67,6 +68,29 @@
     </div>
     {% else %}
     <p>No tournaments created yet.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+{% if ffas %}
+<section class="my-ffas-section">
+    <h3>My FFA Matches</h3>
+    {% if ffas %}
+    <div class="events-list">
+        {% for ffa in ffas %}
+        <div class="event-card">
+            <h4><a href="/ffa/{{ ffa.id }}">{{ ffa.name }}</a></h4>
+            <p>Game: {{ ffa.game.name if ffa.game else 'N/A' }}</p>
+            <p class="status-{{ ffa.status }}">{{ ffa.status }}</p>
+            <p>Created: {{ ffa.created_at.strftime('%Y-%m-%d') if ffa.created_at else '-' }}</p>
+            {% if ffa.status == 'active' %}
+            <a href="/ffa/{{ ffa.id }}" class="btn btn-small">Manage</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No FFA matches created yet.</p>
     {% endif %}
 </section>
 {% endif %}

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Create FFA - {{ league.name }}{% endblock %}
+{% block title %}Create FFA - {{ league.name if league else 'Gaming Tournament & League' }}{% endblock %}
 
 {% block content %}
 <div class="form-container">
-    <h2>Create FFA in {{ league.name }}</h2>
+    <h2>Create FFA{% if league %} in {{ league.name }}{% endif %}</h2>
     <p>FFA (Free For All) - Alle spillere konkurrerer, vinneren får {{ 'floor(X/2)' }} poeng, alle andre får 1 poeng.</p>
     
     <form method="POST">
@@ -36,7 +36,11 @@
         </div>
         
         <button type="submit" class="btn-primary">Create FFA</button>
+        {% if league %}
         <a href="/leagues/{{ league.id }}" class="btn-secondary">Cancel</a>
+        {% else %}
+        <a href="/ffa" class="btn-secondary">Cancel</a>
+        {% endif %}
     </form>
 </div>
 {% endblock %}

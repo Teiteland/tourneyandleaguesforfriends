@@ -119,11 +119,13 @@ class FFAMatch(db.Model):
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'), nullable=True)
     name = db.Column(db.String(100), nullable=False)
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     status = db.Column(db.String(20), default='draft')  # draft, active, completed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     played_at = db.Column(db.DateTime, nullable=True)
     league = db.relationship('League', backref='ffa_matches')
     game = db.relationship('Game', backref='ffa_matches')
+    owner = db.relationship('User', backref='owned_ffas')
 
 class FFAPlayer(db.Model):
     id = db.Column(db.Integer, primary_key=True)

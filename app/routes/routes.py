@@ -31,7 +31,8 @@ def can_manage_ffa(ffa_id):
     if ffa.league_id:
         league = League.query.get(ffa.league_id)
         return league and league.owner_id == session.get('user_id')
-    return False
+    # For standalone FFA, check if user is owner
+    return ffa and ffa.owner_id == session.get('user_id')
 
 def can_view_league(league_id):
     """Check if current user can view the league."""
@@ -343,10 +344,12 @@ def my_events():
     user_id = session['user_id']
     my_leagues = League.query.filter_by(owner_id=user_id).all()
     my_tournaments = Tournament.query.filter_by(owner_id=user_id).all()
+    my_ffas = FFAMatch.query.filter_by(owner_id=user_id).all()
     
     return render_template('my_events.html', 
                          leagues=my_leagues, 
-                         tournaments=my_tournaments)
+                         tournaments=my_tournaments,
+                         ffas=my_ffas)
 
 @main.route('/leagues')
 def leagues():
@@ -1401,6 +1404,56 @@ def create_ffa_in_league(league_id):
         return redirect(url_for('main.league', league_id=league_id))
     
     return render_template('create_ffa.html', league=league, games=games, players=players)
+
+@main.route('/ffa/create', methods=['GET', 'POST'])
+def create_ffa():
+    if not session.get('user_id'):
+        flash('Please log in to create FFA', 'error')
+        return redirect(url_for('main.login'))
+    
+    games = Game.query.filter_by(is_active=True).all()
+    players = Player.query.all()
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        game_id = request.form.get('game_id')
+        selected_players = request.form.getlist('players')
+        
+        if not name or not game_id:
+            flash('Name and game are required', 'error')
+            return render_template('create_ffa.html', games=games, players=players)
+        
+        if len(selected_players) < 2:
+            flash('At least 2 players required', 'error')
+            return render_template('create_ffa.html', games=games, players=players)
+        
+        ffa = FFAMatch(
+            league_id=None,
+            name=name,
+            game_id=game_id,
+            owner_id=session['user_id'],
+            status='active'
+        )
+        db.session.add(ffa)
+        db.session.flush()
+        
+        for player_id in selected_players:
+            fp = FFAPlayer(
+                ffa_match_id=ffa.id,
+                player_id=int(player_id)
+            )
+            db.session.add(fp)
+        
+        db.session.commit()
+        flash(f'FFA "{name}" created!', 'success')
+        return redirect(url_for('main.ffa_match', ffa_id=ffa.id))
+    
+    return render_template('create_ffa.html', games=games, players=players)
+
+@main.route('/ffa')
+def ffa_list():
+    ffAs = FFAMatch.query.filter_by(league_id=None).order_by(FFAMatch.created_at.desc()).all()
+    return render_template('ffa_list.html', ffAs=ffAs)
 
 @main.route('/ffa/<int:ffa_id>', methods=['GET', 'POST'])
 def ffa_match(ffa_id):
