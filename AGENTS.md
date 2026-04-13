@@ -40,7 +40,15 @@
 
 ### Features
 
-1. **League/Serie Mode**
+1. **Player Management**
+   - Add/remove players from active leagues (after league creation)
+   - Owner or admin can manage players when league is active
+   - Players added to active round as bye matches
+   - Removing player removes all their unplayed matches
+   - 12 auto-generated dummy players from Mario Kart universe on initialization
+   - Player statistics tracked
+
+2. **League/Serie Mode**
    - Round-robin format: all players play each other twice (home + away)
    - Home and away matches grouped in the same round
    - Configurable number of players (start: 12, max: 64)

@@ -10,6 +10,9 @@
     {% if league.owner %}
     <p class="league-owner">Owner: {{ league.owner.username }}</p>
     {% endif %}
+    {% if can_manage and league.status == 'active' %}
+    <a href="/leagues/{{ league.id }}/players" class="btn btn-small">Manage Players</a>
+    {% endif %}
 </div>
 
 <section class="standings-section">

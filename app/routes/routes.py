@@ -505,6 +505,101 @@ def end_league(league_id):
     flash(f'League "{league.name}" has been ended', 'success')
     return redirect(url_for('main.league', league_id=league_id))
 
+@main.route('/leagues/<int:league_id>/players')
+def manage_league_players(league_id):
+    if not can_manage_league(league_id):
+        flash('You do not have permission to manage this league', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    league = League.query.get_or_404(league_id)
+    
+    current_player_ids = set()
+    for match in league.matches:
+        if match.home_player_id:
+            current_player_ids.add(match.home_player_id)
+        if match.away_player_id:
+            current_player_ids.add(match.away_player_id)
+    
+    all_players = Player.query.all()
+    available_players = [p for p in all_players if p.id not in current_player_ids]
+    
+    current_players = Player.query.filter(Player.id.in_(current_player_ids)).all() if current_player_ids else []
+    
+    return render_template('manage_league_players.html',
+                         league=league,
+                         current_players=current_players,
+                         available_players=available_players)
+
+@main.route('/leagues/<int:league_id>/players/add', methods=['POST'])
+def add_league_player(league_id):
+    if not can_manage_league(league_id):
+        flash('You do not have permission to manage this league', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    league = League.query.get_or_404(league_id)
+    if league.status == 'completed':
+        flash('Cannot add players - league is completed', 'error')
+        return redirect(url_for('main.manage_league_players', league_id=league_id))
+    
+    player_id = request.form.get('player_id')
+    if player_id:
+        player_id = int(player_id)
+        
+        for match in league.matches:
+            if match.home_player_id == player_id or match.away_player_id == player_id:
+                flash('Player is already in the league', 'error')
+                return redirect(url_for('main.manage_league_players', league_id=league_id))
+        
+        rounds = LeagueRound.query.filter_by(league_id=league_id).order_by(LeagueRound.round_number).all()
+        if rounds:
+            active_round = None
+            for r in rounds:
+                if r.is_active and not r.is_completed:
+                    active_round = r
+                    break
+                if r.is_completed:
+                    continue
+            
+            if active_round:
+                match = Match(
+                    league_id=league_id,
+                    round_id=active_round.id,
+                    home_player_id=player_id,
+                    away_player_id=None,
+                    home_track='New'
+                )
+                db.session.add(match)
+                db.session.commit()
+                flash('Player added successfully', 'success')
+            else:
+                flash('No active round to add player to', 'error')
+    
+    return redirect(url_for('main.manage_league_players', league_id=league_id))
+
+@main.route('/leagues/<int:league_id>/players/remove/<int:player_id>', methods=['POST'])
+def remove_league_player(league_id, player_id):
+    if not can_manage_league(league_id):
+        flash('You do not have permission to manage this league', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    league = League.query.get_or_404(league_id)
+    if league.status == 'completed':
+        flash('Cannot remove players - league is completed', 'error')
+        return redirect(url_for('main.manage_league_players', league_id=league_id))
+    
+    player = Player.query.get_or_404(player_id)
+    
+    Match.query.filter(
+        Match.league_id == league_id,
+        db.or_(Match.home_player_id == player_id, Match.away_player_id == player_id),
+        Match.home_score.is_(None)
+    ).delete()
+    
+    db.session.commit()
+    flash(f'Player {player.name} removed from league', 'success')
+    
+    return redirect(url_for('main.manage_league_players', league_id=league_id))
+
 @main.route('/leagues/<int:league_id>/match/<int:match_id>', methods=['GET', 'POST'])
 def match(league_id, match_id):
     league = League.query.get_or_404(league_id)
