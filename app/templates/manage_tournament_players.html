@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Players - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Manage Players: {{ tournament.name }}</h2>
+    <a href="/tournaments/{{ tournament.id }}" class="btn btn-small">Back to Tournament</a>
+</div>
+
+<div class="player-management">
+    <section class="current-players">
+        <h3>Current Players ({{ tournament_players|length }})</h3>
+        {% if tournament_players %}
+        <div class="players-list">
+            {% for tp in tournament_players %}
+            <div class="player-item">
+                <span>#{{ tp.seed_number }} - {{ tp.player.name }}</span>
+                {% if tournament.status == 'draft' %}
+                <form method="POST" action="/tournaments/{{ tournament.id }}/players/remove/{{ tp.player_id }}" style="display:inline;">
+                    <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('Remove this player?')">Remove</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p>No players added yet.</p>
+        {% endif %}
+    </section>
+
+    {% if tournament.status == 'draft' %}
+    <section class="available-players">
+        <h3>Add Players</h3>
+        {% if available_players %}
+        <form method="POST" action="/tournaments/{{ tournament.id }}/players/add">
+            <div class="form-group">
+                <label for="player_id">Select Player</label>
+                <select id="player_id" name="player_id" required>
+                    <option value="">Select a player</option>
+                    {% for player in available_players %}
+                    <option value="{{ player.id }}">{{ player.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn-primary">Add Player</button>
+        </form>
+        {% else %}
+        <p>No available players to add.</p>
+        {% endif %}
+    </section>
+    {% else %}
+    <section class="notice">
+        <p class="info-message">Tournament has started. Players cannot be added or removed.</p>
+    </section>
+    {% endif %}
+</div>
+
+<style>
+.player-management {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface-color);
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.info-message {
+    color: var(--primary-color);
+    padding: 1rem;
+    background: var(--surface-color);
+    border-radius: 4px;
+}
+</style>
+{% endblock %}

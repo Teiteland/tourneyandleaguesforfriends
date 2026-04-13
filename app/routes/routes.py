@@ -322,6 +322,20 @@ def games():
     
     return render_template('games.html', games=all_games, is_admin=is_admin, show_all=show_all)
 
+@main.route('/my-events')
+def my_events():
+    if not session.get('user_id'):
+        flash('Please log in to view your events', 'error')
+        return redirect(url_for('main.login'))
+    
+    user_id = session['user_id']
+    my_leagues = League.query.filter_by(owner_id=user_id).all()
+    my_tournaments = Tournament.query.filter_by(owner_id=user_id).all()
+    
+    return render_template('my_events.html', 
+                         leagues=my_leagues, 
+                         tournaments=my_tournaments)
+
 @main.route('/leagues')
 def leagues():
     all_leagues = League.query.order_by(League.created_at.desc()).all()
@@ -908,6 +922,84 @@ def start_tournament(tournament_id):
         return redirect(url_for('main.tournament', tournament_id=tournament_id))
     
     tournament_players = TournamentPlayer.query.filter_by(tournament_id=tournament_id).all()
+
+@main.route('/tournaments/<int:tournament_id>/players')
+def manage_tournament_players(tournament_id):
+    if not can_manage_tournament(tournament_id):
+        flash('You do not have permission to manage this tournament', 'error')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    tournament = Tournament.query.get_or_404(tournament_id)
+    tournament_players = TournamentPlayer.query.filter_by(tournament_id=tournament_id).all()
+    
+    all_players = Player.query.all()
+    current_player_ids = [tp.player_id for tp in tournament_players]
+    
+    available_players = [p for p in all_players if p.id not in current_player_ids]
+    
+    return render_template('manage_tournament_players.html',
+                         tournament=tournament,
+                         tournament_players=tournament_players,
+                         available_players=available_players)
+
+@main.route('/tournaments/<int:tournament_id>/players/add', methods=['POST'])
+def add_tournament_player(tournament_id):
+    if not can_manage_tournament(tournament_id):
+        flash('You do not have permission to manage this tournament', 'error')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    tournament = Tournament.query.get_or_404(tournament_id)
+    if tournament.status != 'draft':
+        flash('Cannot add players - tournament has already started', 'error')
+        return redirect(url_for('main.manage_tournament_players', tournament_id=tournament_id))
+    
+    player_id = request.form.get('player_id')
+    if player_id:
+        player_id = int(player_id)
+        
+        existing = TournamentPlayer.query.filter_by(
+            tournament_id=tournament_id,
+            player_id=player_id
+        ).first()
+        
+        if not existing:
+            max_seed = db.session.query(db.func.max(TournamentPlayer.seed_number)).filter_by(
+                tournament_id=tournament_id
+            ).scalar() or 0
+            
+            new_tp = TournamentPlayer(
+                tournament_id=tournament_id,
+                player_id=player_id,
+                seed_number=max_seed + 1
+            )
+            db.session.add(new_tp)
+            db.session.commit()
+            flash('Player added successfully', 'success')
+    
+    return redirect(url_for('main.manage_tournament_players', tournament_id=tournament_id))
+
+@main.route('/tournaments/<int:tournament_id>/players/remove/<int:player_id>', methods=['POST'])
+def remove_tournament_player(tournament_id, player_id):
+    if not can_manage_tournament(tournament_id):
+        flash('You do not have permission to manage this tournament', 'error')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    tournament = Tournament.query.get_or_404(tournament_id)
+    if tournament.status != 'draft':
+        flash('Cannot remove players - tournament has already started', 'error')
+        return redirect(url_for('main.manage_tournament_players', tournament_id=tournament_id))
+    
+    tournament_player = TournamentPlayer.query.filter_by(
+        tournament_id=tournament_id,
+        player_id=player_id
+    ).first()
+    
+    if tournament_player:
+        db.session.delete(tournament_player)
+        db.session.commit()
+        flash('Player removed successfully', 'success')
+    
+    return redirect(url_for('main.manage_tournament_players', tournament_id=tournament_id))
     player_count = len(tournament_players)
     
     if player_count < 2:
