@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from app.models.models import db, League, LeagueRound, Match, Player, Game, User, Tournament, TournamentMatch, TournamentPlayer
+from app.models.models import db, League, LeagueRound, Match, Player, Game, User, Tournament, TournamentMatch, TournamentPlayer, FFAMatch, FFAPlayer
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import uuid
@@ -20,6 +20,18 @@ def can_manage_tournament(tournament_id):
         return True
     tournament = Tournament.query.get(tournament_id)
     return tournament and tournament.owner_id == session.get('user_id')
+
+def can_manage_ffa(ffa_id):
+    """Check if current user can manage the FFA match (admin or league owner)."""
+    if session.get('is_admin'):
+        return True
+    ffa = FFAMatch.query.get(ffa_id)
+    if not ffa:
+        return False
+    if ffa.league_id:
+        league = League.query.get(ffa.league_id)
+        return league and league.owner_id == session.get('user_id')
+    return False
 
 def can_view_league(league_id):
     """Check if current user can view the league."""
@@ -1249,5 +1261,82 @@ def check_tournament_completion(tournament):
                 winner_tp.placement = 1
             
             db.session.commit()
+
+@main.route('/leagues/<int:league_id>/ffa/create', methods=['GET', 'POST'])
+def create_ffa_in_league(league_id):
+    if not can_manage_league(league_id):
+        flash('You do not have permission to manage this league', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    league = League.query.get_or_404(league_id)
+    games = Game.query.filter_by(allow_league=True, is_active=True).all()
+    players = Player.query.all()
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        game_id = request.form.get('game_id')
+        selected_players = request.form.getlist('players')
+        
+        if not name or not game_id:
+            flash('Name and game are required', 'error')
+            return render_template('create_ffa.html', league=league, games=games, players=players)
+        
+        if len(selected_players) < 2:
+            flash('At least 2 players required', 'error')
+            return render_template('create_ffa.html', league=league, games=games, players=players)
+        
+        ffa = FFAMatch(
+            league_id=league_id,
+            name=name,
+            game_id=game_id,
+            status='active'
+        )
+        db.session.add(ffa)
+        db.session.flush()
+        
+        for i, player_id in enumerate(selected_players):
+            fp = FFAPlayer(
+                ffa_match_id=ffa.id,
+                player_id=int(player_id)
+            )
+            db.session.add(fp)
+        
+        db.session.commit()
+        flash(f'FFA match "{name}" created!', 'success')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    return render_template('create_ffa.html', league=league, games=games, players=players)
+
+@main.route('/ffa/<int:ffa_id>', methods=['GET', 'POST'])
+def ffa_match(ffa_id):
+    ffa = FFAMatch.query.get_or_404(ffa_id)
+    can_manage = can_manage_ffa(ffa_id)
+    ffa_players = FFAPlayer.query.filter_by(ffa_match_id=ffa_id).order_by(FFAPlayer.placement).all()
+    all_players = Player.query.all()
+    
+    # Get players not yet in FFA (for adding more)
+    current_player_ids = [fp.player_id for fp in ffa_players]
+    available_to_add = [p for p in all_players if p.id not in current_player_ids]
+    
+    if request.method == 'POST' and can_manage and ffa.status == 'active':
+        for fp in ffa_players:
+            placement_key = f'placement_{fp.player_id}'
+            placement = request.form.get(placement_key)
+            if placement:
+                fp.placement = int(placement)
+                # Poengberegning: 1. plass får floor(X/2), alle andre får 1 poeng
+                player_count = len(ffa_players)
+                if fp.placement == 1:
+                    fp.points_earned = player_count // 2
+                else:
+                    fp.points_earned = 1
+        
+        ffa.status = 'completed'
+        ffa.played_at = datetime.utcnow()
+        db.session.commit()
+        flash('FFA result saved!', 'success')
+        return redirect(url_for('main.ffa_match', ffa_id=ffa_id))
+    
+    return render_template('ffa_match.html', ffa=ffa, ffa_players=ffa_players, can_manage=can_manage, available_to_add=available_to_add)
 
 import math

@@ -113,3 +113,23 @@ class TournamentMatch(db.Model):
     winner = db.relationship('Player', foreign_keys=[winner_id])
     next_match = db.relationship('TournamentMatch', foreign_keys=[next_match_id], remote_side=[id])
     loser_next_match = db.relationship('TournamentMatch', foreign_keys=[loser_next_match_id], remote_side=[id])
+
+class FFAMatch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    league_id = db.Column(db.Integer, db.ForeignKey('league.id'), nullable=True)
+    name = db.Column(db.String(100), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
+    status = db.Column(db.String(20), default='draft')  # draft, active, completed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    played_at = db.Column(db.DateTime, nullable=True)
+    league = db.relationship('League', backref='ffa_matches')
+    game = db.relationship('Game', backref='ffa_matches')
+
+class FFAPlayer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    ffa_match_id = db.Column(db.Integer, db.ForeignKey('ffa_match.id'))
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    placement = db.Column(db.Integer, nullable=True)  # 1 = winner, 2 = second, etc.
+    points_earned = db.Column(db.Integer, default=0)
+    ffa_match = db.relationship('FFAMatch', backref='players')
+    player = db.relationship('Player', backref='ffa_results')

@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}FFA: {{ ffa.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>FFA: {{ ffa.name }}</h2>
+    {% if ffa.league %}
+    <a href="/leagues/{{ ffa.league_id }}" class="btn btn-small">Back to League</a>
+    {% endif %}
+</div>
+
+<div class="ffa-status">
+    <p>Status: <span class="status-{{ ffa.status }}">{{ ffa.status }}</span></p>
+    {% if ffa.game %}
+    <p>Game: {{ ffa.game.name }}</p>
+    {% endif %}
+    {% if ffa.played_at %}
+    <p>Played: {{ ffa.played_at.strftime('%Y-%m-%d') }}</p>
+    {% endif %}
+    <p class="points-info"><strong>Poengsystem:</strong> 1. plass får {{ ffa_players|length // 2 }} poeng, alle andre får 1 poeng</p>
+</div>
+
+<h3>Players</h3>
+{% if can_manage and ffa.status == 'active' %}
+<form method="POST" class="ffa-form">
+    <p class="info">Enter placement for each player (1 = winner, 2 = second, etc.)</p>
+    <div class="players-list">
+        {% for fp in ffa_players %}
+        <div class="player-item">
+            <span>{{ fp.player.name }}</span>
+            <input type="number" name="placement_{{ fp.player_id }}" min="1" max="{{ ffa_players|length }}" value="{{ fp.placement or '' }}" placeholder="#">
+        </div>
+        {% endfor %}
+    </div>
+    <button type="submit" class="btn-primary" onclick="return confirm('Save FFA results?')">Save Results</button>
+</form>
+
+{% if available_to_add %}
+<h4>Add More Players</h4>
+<p class="info">Players not yet in FFA:</p>
+<div class="available-players">
+    {% for player in available_to_add %}
+    <span class="player-tag">{{ player.name }}</span>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="results-list">
+    {% for fp in ffa_players %}
+    <div class="result-item {% if fp.placement == 1 %}winner{% endif %}">
+        <span class="placement">#{{ fp.placement or '-' }}</span>
+        <span class="player-name">{{ fp.player.name }}</span>
+        <span class="points">{{ fp.points_earned }} poeng</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<style>
+.ffa-status {
+    background: var(--surface-color);
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+}
+
+.ffa-status p {
+    margin: 0.25rem 0;
+}
+
+.points-info {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    margin-top: 0.5rem !important;
+}
+
+.status-active {
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.status-completed {
+    color: var(--text-muted);
+    font-weight: bold;
+}
+
+.info {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--surface-color);
+    border-radius: 4px;
+}
+
+.player-item input {
+    width: 60px;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--surface-color);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.result-item.winner {
+    background: var(--success-color);
+    color: white;
+}
+
+.result-item .placement {
+    font-weight: bold;
+    min-width: 40px;
+}
+
+.result-item .player-name {
+    flex: 1;
+}
+
+.result-item .points {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.result-item.winner .points {
+    color: white;
+}
+
+.available-players {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.player-tag {
+    background: var(--bg-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}
