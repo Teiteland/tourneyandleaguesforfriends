@@ -19,10 +19,11 @@ The application will be available at `http://127.0.0.1:5000`
 
 ## Features
 
-### Current Features (Phase 1-3)
+### Current Features (Phase 1-4)
 
 - **League/Serie System** - Round-robin format where all players play each other twice (home + away) in the same round
 - **Multiple Parallel Leagues** - Create and manage multiple active leagues simultaneously
+- **Player Management** - Add/remove players to active leagues
 - **Manual League End** - Owner or admin can end a league manually even if not all matches played
 - **Edit Match Results** - Owner or admin can edit results while league is active (click on result to edit)
 - **Round Activation** - Rounds can be locked, active, or completed
@@ -54,7 +55,15 @@ The application will be available at `http://127.0.0.1:5000`
 - **Tournament Completion** - Automatic detection when champion is crowned
 - **Owner System** - Tournament creator has management rights
 
-### Upcoming Features (Phase 4+)
+### FFA System (Phase 4)
+
+- **Standalone FFA** - Create FFA from main page or My Events
+- **FFA in Leagues** - Add FFA rounds within leagues
+- **Scoring** - 1st place gets floor(X/2) points, everyone else gets 1 point
+- **Flexible Player Count** - Any number of players (minimum 2)
+- **Owner System** - FFA creator has management rights
+
+### Upcoming Features (Phase 5+)
 
 - Support for additional competitive games
 - Advanced statistics and analytics

@@ -191,7 +191,7 @@
 - Admin can unlock accounts and reset passwords
 - Users can change their own password
 
-## Phase 3: Tournament System (Current)
+## Phase 3: Tournament System (Implemented)
 
 ### Features
 
@@ -260,7 +260,49 @@
 | loser_next_match_id | INTEGER | Next match (loser) |
 | played_at | DATETIME | Match timestamp |
 
-## Phase 4: Extensibility (Future)
+## Phase 4: FFA (Free For All) (Implemented)
+
+### Features
+
+1. **FFA Creation**
+   - Standalone FFA (from main page or My Events)
+   - FFA within leagues
+   - Any number of players (minimum 2)
+   - Owner system: creator + admin can manage
+
+2. **FFA Scoring**
+   - 1st place: floor(X/2) points (X = number of players)
+   - All other placements: 1 point
+
+3. **FFA Management**
+   - Manual placement entry
+   - Automatic points calculation
+   - Status: draft → active → completed
+
+### Database Schema
+
+#### FFAMatch Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | Primary key |
+| league_id | INTEGER | Foreign key to Leagues (nullable) |
+| name | TEXT | FFA match name |
+| game_id | INTEGER | Foreign key to Games |
+| owner_id | INTEGER | Foreign key to Users |
+| status | TEXT | draft/active/completed |
+| created_at | DATETIME | Creation timestamp |
+| played_at | DATETIME | Completion timestamp |
+
+#### FFAPlayer Table
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | Primary key |
+| ffa_match_id | INTEGER | Foreign key to FFAMatch |
+| player_id | INTEGER | Foreign key to Players |
+| placement | INTEGER | Final placement |
+| points_earned | INTEGER | Points awarded |
+
+## Phase 5: Extensibility (Future)
 
 - Support for additional competitive games
 - Configurable tournament formats
