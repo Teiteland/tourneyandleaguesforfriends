@@ -132,3 +132,32 @@ flask db upgrade
   Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
 
 ---
+  Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
+
+---
+Plan: Deploy til Render
+1. Nødvendige endringer:
+Fil	Status
+requirements.txt	Trenger gunicorn
+Procfile	Må lages
+.gitignore	Sjekk
+2. Nye filer:
+requirements.txt - legg til:
+gunicorn>=21.0.0
+Procfile:
+web: gunicorn -b :$PORT app:app
+3. Render-oppsett:
+4. Koble GitHub-repo til Render
+5. Opprett "Web Service"
+6. Velg "Free" tier (men obs: forsvinner etter 90 dager inaktivitet)
+7. Sett miljøvariabler:
+   - SECRET_KEY = (generate random)
+   - DATABASE_URI = (Render gir PostgreSQL URL automatisk)
+5. Build command: pip install -r requirements.txt
+6. Start command: gunicorn -b :$PORT app:app
+7. Database-migrering på Render:
+Etter første deploy, kjør via Render's "Bash" eller CLI:
+flask db upgrade
+8. Eventuelt:
+- Legg til .env i .gitignore hvis ikke der
+- Lag evt. en enkel runtime.txt med python-3.11
