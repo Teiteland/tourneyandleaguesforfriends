@@ -161,3 +161,39 @@ flask db upgrade
 8. Eventuelt:
 - Legg til .env i .gitignore hvis ikke der
 - Lag evt. en enkel runtime.txt med python-3.11
+---
+Oppdatering av Render
+1. Hvordan oppdatere:
+Auto-deploy:
+- Render er koblet til GitHub
+- Når du pusher ny kode → Render bygger automatisk på nytt
+- Du ser progresjonen i Render-dashbordet
+Manuell deploy:
+- Gå til Render → din web service → "Deploy"
+---
+2. Hva skjer med databasen?
+Handling	Database på Render
+Push ny kode	Beholdes ✓
+flask db migrate	Legger til nye tabeller/kolonner
+flask db upgrade	Kjører ventende migreringer
+Databasen overskrives IKKE - den er persistent.
+---
+3. Når du legger til nye funksjoner:
+Hvis du kun legger til kode (ingen database-endringer):
+4. git add .
+5. git commit -m "nye funksjoner"
+6. git push origin main
+7. Render deployer automatisk
+Hvis du legger til nye modeller/tabeller:
+8. Samme som over
+9. Deretter via Render's Bash:
+      flask db migrate -m "beskrivelse"
+   flask db upgrade
+   
+---
+Oppsummert:
+Spørsmål	Svar
+Pusher til GitHub?	Ja
+Deployer automatisk?	Ja
+Database overskrives?	Nei
+Må jeg kjøre migrering?	Kun hvis du endrer modeller

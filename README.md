@@ -218,8 +218,37 @@ The application will be available at `http://127.0.0.1:5000`
 ## Technology Stack
 
 - **Backend**: Flask (Python)
-- **Database**: SQLite
+- **Database**: SQLite / PostgreSQL (on Render)
 - **Frontend**: HTML, CSS, JavaScript
+
+## Deployment (Render)
+
+### Quick Deploy
+
+1. Push to GitHub
+2. Create Web Service on [Render.com](https://render.com)
+3. Connect your GitHub repository
+4. Choose "Free" tier
+5. Set Environment Variables:
+   - `SECRET_KEY` = (generate random string, e.g. `openssl rand -hex 32`)
+   - `DATABASE_URI` = (leave empty - Render provides PostgreSQL automatically)
+6. Build Command: `pip install -r requirements.txt`
+7. Start Command: `gunicorn -b :$PORT "app:create_app()"`
+
+### Auto-Init
+
+The Procfile automatically runs on each deploy:
+- `flask create-admin` - Creates admin user (even.teigland@gmail.com / admin123)
+- `flask seed-data` - Adds test data
+
+### Updating
+
+When you push new code to GitHub, Render automatically deploys. If you add new database models, run:
+
+```bash
+flask db migrate -m "description"
+flask db upgrade
+```
 
 ## License
 

@@ -343,3 +343,28 @@ FLASK_ENV=development
 SECRET_KEY=your-secret-key
 DATABASE_URI=sqlite:///gaming_liga.db
 ```
+
+## Deployment (Render)
+
+### Quick Deploy
+
+1. Push to GitHub
+2. Create Web Service on Render.com
+3. Set Environment Variables:
+   - `SECRET_KEY` = random string
+   - `DATABASE_URI` = (leave empty - Render provides PostgreSQL)
+4. Deploy automatically triggers
+
+### Auto-Init
+
+The Procfile runs these commands on each deploy:
+- `flask create-admin` - Creates admin user (even.teigland@gmail.com / admin123)
+- `flask seed-data` - Adds test data
+
+### Manual Commands (if needed)
+
+```bash
+# Run migrations
+flask db migrate -m "description"
+flask db upgrade
+```
