@@ -197,3 +197,10 @@ Pusher til GitHub?	Ja
 Deployer automatisk?	Ja
 Database overskrives?	Nei
 Må jeg kjøre migrering?	Kun hvis du endrer modeller
+
+
+---
+
+  Session   Project kickoff: AGENTS.md for Mario Kart 8 tourn…
+  Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
+
