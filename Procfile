@@ -1,1 +1,1 @@
-web: sh -c "flask db upgrade && flask create-admin && flask seed-data && gunicorn -b :$PORT \"app:create_app()\""
+web: sh -c "flask init-db && flask create-admin && flask seed-data && gunicorn -b :$PORT \"app:create_app()\""
