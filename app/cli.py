@@ -48,6 +48,8 @@ def init_db():
         admin.username = 'Teiteland'
         admin.password_hash = generate_password_hash('admin123')
         admin.is_admin = True
+        admin.is_locked = False
+        admin.failed_login_attempts = 0
     
     db.session.commit()
     
@@ -65,6 +67,8 @@ def init_db():
         test_user.username = 'bruker'
         test_user.password_hash = generate_password_hash('bruker123')
         test_user.is_admin = False
+        test_user.is_locked = False
+        test_user.failed_login_attempts = 0
     
     db.session.commit()
     click.echo('Database initialized with dummy players, games, and users.')
