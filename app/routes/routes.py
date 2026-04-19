@@ -582,6 +582,24 @@ def add_league_player(league_id):
         flash('All rounds are completed', 'error')
         return redirect(url_for('main.manage_league_players', league_id=league_id))
     
+    catch_up_round = LeagueRound.query.filter_by(league_id=league_id, round_number=len(rounds) + 1).first()
+    
+    regular_rounds = [r for r in remaining_rounds if not (catch_up_round and r.id == catch_up_round.id)]
+    
+    walkover_slots = []
+    for r in regular_rounds:
+        walkover_matches = Match.query.filter(
+            Match.league_id == league_id,
+            Match.round_id == r.id,
+            Match.is_walkover == True,
+            Match.home_player_id.isnot(None)
+        ).all()
+        for wm in walkover_matches:
+            walkover_slots.append({
+                'round': r,
+                'player_id': wm.home_player_id if wm.away_player_id is None else wm.away_player_id
+            })
+    
     new_matches = []
     for existing_player_id in current_player_ids:
         new_matches.append({
@@ -595,26 +613,38 @@ def add_league_player(league_id):
             'track': 'Away'
         })
     
-    catch_up_round = LeagueRound.query.filter_by(league_id=league_id, round_number=len(rounds) + 1).first()
-    
-    rounds_with_capacity = []
-    for r in remaining_rounds:
-        if catch_up_round and r.id == catch_up_round.id:
-            continue
-        current_matches_in_round = Match.query.filter_by(round_id=r.id, league_id=league_id).count()
-        rounds_with_capacity.append({
-            'round': r,
-            'current_count': current_matches_in_round
-        })
+    matches_placed_to_walkover = []
+    new_matches_copy = list(new_matches)
+    for ws in walkover_slots:
+        if not new_matches_copy:
+            break
+        ws_player = ws['player_id']
+        ws_round = ws['round']
+        
+        for i, nm in enumerate(new_matches_copy):
+            if nm['away_player_id'] == ws_player:
+                match = Match(
+                    league_id=league_id,
+                    round_id=ws_round.id,
+                    home_player_id=nm['home_player_id'],
+                    away_player_id=nm['away_player_id'],
+                    home_track=nm['track']
+                )
+                db.session.add(match)
+                matches_placed_to_walkover.append(nm['home_player_id'])
+                new_matches_copy.pop(i)
+                break
     
     matches_placed = 0
     for match_data in new_matches:
+        if match_data['home_player_id'] in matches_placed_to_walkover:
+            continue
+        
         placed = False
-        for round_info in rounds_with_capacity:
-            round_obj = round_info['round']
+        for r in regular_rounds:
             existing_in_round = Match.query.filter(
                 Match.league_id == league_id,
-                Match.round_id == round_obj.id,
+                Match.round_id == r.id,
                 db.or_(
                     db.and_(Match.home_player_id == match_data['home_player_id'], Match.away_player_id == match_data['away_player_id']),
                     db.and_(Match.home_player_id == match_data['away_player_id'], Match.away_player_id == match_data['home_player_id'])
@@ -626,7 +656,7 @@ def add_league_player(league_id):
             
             match = Match(
                 league_id=league_id,
-                round_id=round_obj.id,
+                round_id=r.id,
                 home_player_id=match_data['home_player_id'],
                 away_player_id=match_data['away_player_id'],
                 home_track=match_data['track']
@@ -636,7 +666,7 @@ def add_league_player(league_id):
             placed = True
             break
     
-    remaining_matches = len(new_matches) - matches_placed
+    remaining_matches = len(new_matches) - matches_placed - len(matches_placed_to_walkover)
     if remaining_matches > 0:
         if not catch_up_round:
             catch_up_round = LeagueRound(
@@ -648,6 +678,9 @@ def add_league_player(league_id):
             db.session.flush()
         
         for match_data in new_matches:
+            if match_data['home_player_id'] in matches_placed_to_walkover:
+                continue
+            
             already_exists = Match.query.filter(
                 Match.league_id == league_id,
                 Match.round_id == catch_up_round.id,
