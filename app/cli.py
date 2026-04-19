@@ -34,44 +34,8 @@ def init_db():
             game = Game(**game_data)
             db.session.add(game)
     
-    admin = User.query.filter_by(email='even.teigland@gmail.com').first()
-    if not admin:
-        admin = User(
-            username='Teiteland',
-            email='even.teigland@gmail.com',
-            password_hash=generate_password_hash('admin123'),
-            is_admin=True,
-            created_at=datetime.utcnow()
-        )
-        db.session.add(admin)
-    else:
-        admin.username = 'Teiteland'
-        admin.password_hash = generate_password_hash('admin123')
-        admin.is_admin = True
-        admin.is_locked = False
-        admin.failed_login_attempts = 0
-    
     db.session.commit()
-    
-    test_user = User.query.filter_by(email='bruker@example.com').first()
-    if not test_user:
-        test_user = User(
-            username='bruker',
-            email='bruker@example.com',
-            password_hash=generate_password_hash('bruker123'),
-            is_admin=False,
-            created_at=datetime.utcnow()
-        )
-        db.session.add(test_user)
-    else:
-        test_user.username = 'bruker'
-        test_user.password_hash = generate_password_hash('bruker123')
-        test_user.is_admin = False
-        test_user.is_locked = False
-        test_user.failed_login_attempts = 0
-    
-    db.session.commit()
-    click.echo('Database initialized with dummy players, games, and users.')
+    click.echo('Database initialized with dummy players and games.')
 
 @click.command('create-admin')
 @with_appcontext

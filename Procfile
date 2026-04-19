@@ -1,1 +1,1 @@
-web: flask init-db && gunicorn -b :$PORT "app:create_app()"
+web: flask db upgrade && gunicorn -b :$PORT "app:create_app()"
