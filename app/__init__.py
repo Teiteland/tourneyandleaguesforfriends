@@ -17,9 +17,10 @@ def create_app(config_class=Config):
     from app.routes import main
     app.register_blueprint(main)
 
-    from app.cli import init_db, seed_data, create_admin
+    from app.cli import init_db, seed_data, create_admin, migrate_users
     app.cli.add_command(init_db)
     app.cli.add_command(seed_data)
     app.cli.add_command(create_admin)
+    app.cli.add_command(migrate_users)
 
     return app

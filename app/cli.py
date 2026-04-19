@@ -247,3 +247,20 @@ def seed_data():
     
     db.session.commit()
     click.echo('Seed data created with round-robin structure (home + away in same round).')
+
+@click.command('migrate-users')
+@with_appcontext
+def migrate_users():
+    """Migrate existing Users to Players (for users created before auto-creation was added)."""
+    users = User.query.all()
+    migrated = 0
+    
+    for user in users:
+        existing = Player.query.filter_by(name=user.username).first()
+        if not existing:
+            player = Player(name=user.username, is_dummy=False)
+            db.session.add(player)
+            migrated += 1
+    
+    db.session.commit()
+    click.echo(f'Migrated {migrated} users to players.')

@@ -303,3 +303,31 @@ free -h
 
   Session   Project kickoff: AGENTS.md for Mario Kart 8 tourn…
   Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
+
+SQL
+---
+Lag admin
+INSERT INTO "user" (username, email, password_hash, is_admin, is_locked, failed_login_attempts)
+VALUES ('DittNavn', 'epost@domene.no', 'bcrypt:hash', TRUE, FALSE, 0);
+Hvis bruker finnes:
+
+SQL for å gjøre en bruker til admin i DBeaver
+Kjør denne setningen (bytt ut epost og navn):
+UPDATE "user" 
+SET is_admin = TRUE 
+WHERE email = 'epost@domene.no' 
+   OR username = 'brukernavn';
+Eksempel med Teiteland:
+UPDATE "user" 
+SET is_admin = TRUE 
+WHERE email = 'even.teigland@gmail.com';
+---
+Andre nyttige setninger
+Låse opp bruker:
+UPDATE "user" 
+SET is_locked = FALSE, failed_login_attempts = 0
+WHERE email = 'epost@domene.no';
+Sjekke alle admins:
+SELECT username, email, is_admin FROM "user" WHERE is_admin = TRUE;
+
+---

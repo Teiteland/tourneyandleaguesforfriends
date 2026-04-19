@@ -134,6 +134,10 @@ def register():
         db.session.add(user)
         db.session.commit()
         
+        player = Player(name=username, is_dummy=False)
+        db.session.add(player)
+        db.session.commit()
+        
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('main.login'))
     

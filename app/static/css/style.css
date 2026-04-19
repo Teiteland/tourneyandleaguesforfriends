@@ -18,7 +18,7 @@
     --primary-color: #1565c0;
     --secondary-color: #018786;
     --text-color: #121212;
-    --text-secondary: #666666;
+    --text-secondary: #444444;
     --border-color: #cccccc;
     --home-color: #2e7d32;
     --away-color: #e64a19;
@@ -314,6 +314,11 @@ footer {
 
 .league-card h3 {
     margin-top: 0;
+    color: var(--text-color);
+}
+
+h3 {
+    color: var(--text-color);
 }
 
 .league-card a {
@@ -836,7 +841,7 @@ footer {
     }
     
     /* Buttons */
-    .btn, .btn-primary, .btn-secondary {
+    .btn, .btn-primary, .btn-secondary, .btn-danger {
         padding: 0.6rem 1rem;
         font-size: 0.9rem;
         min-width: 100%;
