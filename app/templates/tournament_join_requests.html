@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Join Requests - {{ tournament.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Join Requests: {{ tournament.name }}</h2>
+    <a href="/tournaments/{{ tournament.id }}" class="btn btn-small">Back to Tournament</a>
+</div>
+
+{% if pending_requests %}
+    <div class="requests-list">
+        {% for req in pending_requests %}
+        <div class="request-card">
+            <div class="request-player">
+                <strong>{{ req.player.name }}</strong>
+                <span class="request-date">Requested: {{ req.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </div>
+            <div class="request-actions">
+                <form method="POST" action="/tournaments/{{ tournament.id }}/join-requests/{{ req.id }}/approve" style="display:inline;">
+                    <button type="submit" class="btn btn-small btn-primary">Approve</button>
+                </form>
+                <form method="POST" action="/tournaments/{{ tournament.id }}/join-requests/{{ req.id }}/deny" style="display:inline;">
+                    <button type="submit" class="btn btn-small btn-danger">Deny</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No pending join requests.</p>
+{% endif %}
+
+<style>
+.requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+.request-card {
+    background: var(--surface-color, #2a2a2a);
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.request-player {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.request-date {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #aaa);
+}
+.request-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+</style>
+{% endblock %}

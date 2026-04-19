@@ -135,3 +135,21 @@ class FFAPlayer(db.Model):
     points_earned = db.Column(db.Integer, default=0)
     ffa_match = db.relationship('FFAMatch', backref='players')
     player = db.relationship('Player', backref='ffa_results')
+
+class LeagueJoinRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    league_id = db.Column(db.Integer, db.ForeignKey('league.id'))
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    status = db.Column(db.String(20), default='pending')  # pending, approved, denied
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    league = db.relationship('League', backref='join_requests')
+    player = db.relationship('Player', backref='league_join_requests')
+
+class TournamentJoinRequest(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.id'))
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    status = db.Column(db.String(20), default='pending')  # pending, approved, denied
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    tournament = db.relationship('Tournament', backref='join_requests')
+    player = db.relationship('Player', backref='tournament_join_requests')

@@ -209,6 +209,9 @@ footer {
     font-size: 1rem;
     margin-right: 0.5rem;
     margin-bottom: 0.5rem;
+    min-width: 120px;
+    text-align: center;
+    box-sizing: border-box;
 }
 
 .btn:hover, .btn-primary:hover, .btn-secondary:hover {
@@ -836,12 +839,17 @@ footer {
     .btn, .btn-primary, .btn-secondary {
         padding: 0.6rem 1rem;
         font-size: 0.9rem;
+        min-width: 100%;
+        display: inline-block;
+        text-align: center;
     }
     
     .btn-large {
         padding: 0.75rem 1rem;
         font-size: 1rem;
         min-width: 100%;
+        display: inline-block;
+        text-align: center;
     }
     
     /* Match cards */

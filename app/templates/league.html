@@ -12,6 +12,13 @@
     {% endif %}
     {% if can_manage and league.status == 'active' %}
     <a href="/leagues/{{ league.id }}/players" class="btn btn-small">Manage Players</a>
+    <a href="/leagues/{{ league.id }}/join-requests" class="btn btn-small">View Join Requests</a>
+    {% endif %}
+    {% if session.get('user_id') and league.status == 'active' and not can_manage and own_profile %}
+    <form method="POST" action="/leagues/{{ league.id }}/request-join" style="display:inline;">
+        <input type="hidden" name="player_id" value="{{ own_profile.id }}">
+        <button type="submit" class="btn btn-small btn-primary">Request to Join</button>
+    </form>
     {% endif %}
 </div>
 

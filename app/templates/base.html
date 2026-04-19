@@ -17,13 +17,6 @@
                 {% if session.get('user_id') %}
                     <li><a href="/logout">Logout ({{ session.get('username') }})</a></li>
                 {% endif %}
-                <li class="theme-selector">
-                    <select id="theme-select">
-                        <option value="dark">Dark</option>
-                        <option value="light">Light</option>
-                        <option value="earth">Earth</option>
-                    </select>
-                </li>
             </ul>
         </nav>
     </header>

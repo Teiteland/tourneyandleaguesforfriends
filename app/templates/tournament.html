@@ -17,6 +17,16 @@
     {% if tournament.owner %}
     <p class="tournament-owner">Owner: {{ tournament.owner.username }}</p>
     {% endif %}
+    {% if can_manage and tournament.status == 'draft' %}
+    <a href="/tournaments/{{ tournament.id }}/players" class="btn btn-small">Manage Players</a>
+    <a href="/tournaments/{{ tournament.id }}/join-requests" class="btn btn-small">View Join Requests</a>
+    {% endif %}
+    {% if session.get('user_id') and tournament.status == 'draft' and not can_manage and own_profile %}
+    <form method="POST" action="/tournaments/{{ tournament.id }}/request-join" style="display:inline;">
+        <input type="hidden" name="player_id" value="{{ own_profile.id }}">
+        <button type="submit" class="btn btn-small btn-primary">Request to Join</button>
+    </form>
+    {% endif %}
 </div>
 
 {% if tournament.status == 'draft' and can_manage %}

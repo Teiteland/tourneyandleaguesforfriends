@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from app.models.models import db, League, LeagueRound, Match, Player, Game, User, Tournament, TournamentMatch, TournamentPlayer, FFAMatch, FFAPlayer
+from app.models.models import db, League, LeagueRound, Match, Player, Game, User, Tournament, TournamentMatch, TournamentPlayer, FFAMatch, FFAPlayer, LeagueJoinRequest, TournamentJoinRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import uuid
@@ -406,9 +406,15 @@ def league(league_id):
     standings = calculate_standings(league_id)
     can_manage = can_manage_league(league_id)
     
+    own_profile = None
+    if session.get('user_id'):
+        player_exists = Player.query.filter_by(name=session.get('username')).first()
+        if player_exists:
+            own_profile = player_exists
+    
     return render_template('league.html', league=league, rounds=rounds, 
                            matches_by_round=matches_by_round, standings=standings,
-                           can_manage=can_manage)
+                           can_manage=can_manage, own_profile=own_profile)
 
 @main.route('/leagues/<int:league_id>/round/<int:round_number>/activate')
 def activate_round(league_id, round_number):
@@ -602,6 +608,98 @@ def remove_league_player(league_id, player_id):
     flash(f'Player {player.name} removed from league', 'success')
     
     return redirect(url_for('main.manage_league_players', league_id=league_id))
+
+@main.route('/leagues/<int:league_id>/request-join', methods=['POST'])
+def request_join_league(league_id):
+    if not session.get('user_id'):
+        flash('Please log in to request to join', 'error')
+        return redirect(url_for('main.login'))
+    
+    player_id = request.form.get('player_id')
+    if not player_id:
+        flash('No player selected', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    player_id = int(player_id)
+    
+    existing_request = LeagueJoinRequest.query.filter_by(
+        league_id=league_id,
+        player_id=player_id,
+        status='pending'
+    ).first()
+    
+    if existing_request:
+        flash('You have already requested to join this league', 'info')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    already_in = Match.query.filter(
+        Match.league_id == league_id,
+        db.or_(Match.home_player_id == player_id, Match.away_player_id == player_id)
+    ).first()
+    
+    if already_in:
+        flash('You are already in this league', 'info')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    join_request = LeagueJoinRequest(
+        league_id=league_id,
+        player_id=player_id,
+        status='pending'
+    )
+    db.session.add(join_request)
+    db.session.commit()
+    flash('Join request sent!', 'success')
+    return redirect(url_for('main.league', league_id=league_id))
+
+@main.route('/leagues/<int:league_id>/join-requests')
+def view_league_join_requests(league_id):
+    if not can_manage_league(league_id):
+        flash('You do not have permission to view requests', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    league = League.query.get_or_404(league_id)
+    pending_requests = LeagueJoinRequest.query.filter_by(
+        league_id=league_id,
+        status='pending'
+    ).all()
+    
+    return render_template('league_join_requests.html', league=league, pending_requests=pending_requests)
+
+@main.route('/leagues/<int:league_id>/join-requests/<int:request_id>/<action>', methods=['POST'])
+def handle_league_join_request(league_id, request_id, action):
+    if not can_manage_league(league_id):
+        flash('You do not have permission to manage requests', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    join_request = LeagueJoinRequest.query.get_or_404(request_id)
+    
+    if action == 'approve':
+        join_request.status = 'approved'
+        league = League.query.get(league_id)
+        active_round = None
+        for r in league.rounds:
+            if r.is_active and not r.is_completed:
+                active_round = r
+                break
+            if r.is_completed:
+                continue
+        
+        if active_round:
+            match = Match(
+                league_id=league_id,
+                round_id=active_round.id,
+                home_player_id=join_request.player_id,
+                away_player_id=None,
+                home_track='New'
+            )
+            db.session.add(match)
+        flash('Player added to league!', 'success')
+    elif action == 'deny':
+        join_request.status = 'denied'
+        flash('Request denied', 'success')
+    
+    db.session.commit()
+    return redirect(url_for('main.view_league_join_requests', league_id=league_id))
 
 @main.route('/leagues/<int:league_id>/match/<int:match_id>', methods=['GET', 'POST'])
 def match(league_id, match_id):
@@ -1011,13 +1109,20 @@ def tournament(tournament_id):
     
     can_manage = can_manage_tournament(tournament_id)
     
+    own_profile = None
+    if session.get('user_id'):
+        player_exists = Player.query.filter_by(name=session.get('username')).first()
+        if player_exists:
+            own_profile = player_exists
+    
     return render_template('tournament.html', 
                          tournament=tournament, 
                          tournament_players=tournament_players,
                          matches_by_round=matches_by_round,
                          losers_matches_by_round=losers_matches_by_round,
                          grand_finals=grand_finals,
-                         can_manage=can_manage)
+                         can_manage=can_manage,
+                         own_profile=own_profile)
 
 @main.route('/tournaments/<int:tournament_id>/start', methods=['POST'])
 def start_tournament(tournament_id):
@@ -1087,6 +1192,87 @@ def add_tournament_player(tournament_id):
             flash('Player added successfully', 'success')
     
     return redirect(url_for('main.manage_tournament_players', tournament_id=tournament_id))
+
+@main.route('/tournaments/<int:tournament_id>/request-join', methods=['POST'])
+def request_join_tournament(tournament_id):
+    if not session.get('user_id'):
+        flash('Please log in to request to join', 'error')
+        return redirect(url_for('main.login'))
+    
+    player_id = request.form.get('player_id')
+    if not player_id:
+        flash('No player selected', 'error')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    player_id = int(player_id)
+    
+    existing_request = TournamentJoinRequest.query.filter_by(
+        tournament_id=tournament_id,
+        player_id=player_id,
+        status='pending'
+    ).first()
+    
+    if existing_request:
+        flash('You have already requested to join this tournament', 'info')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    already_in = TournamentPlayer.query.filter_by(
+        tournament_id=tournament_id,
+        player_id=player_id
+    ).first()
+    
+    if already_in:
+        flash('You are already in this tournament', 'info')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    join_request = TournamentJoinRequest(
+        tournament_id=tournament_id,
+        player_id=player_id,
+        status='pending'
+    )
+    db.session.add(join_request)
+    db.session.commit()
+    flash('Join request sent!', 'success')
+    return redirect(url_for('main.tournament', tournament_id=tournament_id))
+
+@main.route('/tournaments/<int:tournament_id>/join-requests')
+def view_tournament_join_requests(tournament_id):
+    if not can_manage_tournament(tournament_id):
+        flash('You do not have permission to view requests', 'error')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    tournament = Tournament.query.get_or_404(tournament_id)
+    pending_requests = TournamentJoinRequest.query.filter_by(
+        tournament_id=tournament_id,
+        status='pending'
+    ).all()
+    
+    return render_template('tournament_join_requests.html', tournament=tournament, pending_requests=pending_requests)
+
+@main.route('/tournaments/<int:tournament_id>/join-requests/<int:request_id>/<action>', methods=['POST'])
+def handle_tournament_join_request(tournament_id, request_id, action):
+    if not can_manage_tournament(tournament_id):
+        flash('You do not have permission to manage requests', 'error')
+        return redirect(url_for('main.tournament', tournament_id=tournament_id))
+    
+    join_request = TournamentJoinRequest.query.get_or_404(request_id)
+    
+    if action == 'approve':
+        join_request.status = 'approved'
+        tournament_player = TournamentPlayer(
+            tournament_id=tournament_id,
+            player_id=join_request.player_id,
+            seed_number=None,
+            eliminated=False
+        )
+        db.session.add(tournament_player)
+        flash('Player added to tournament!', 'success')
+    elif action == 'deny':
+        join_request.status = 'denied'
+        flash('Request denied', 'success')
+    
+    db.session.commit()
+    return redirect(url_for('main.view_tournament_join_requests', tournament_id=tournament_id))
 
 @main.route('/tournaments/<int:tournament_id>/players/remove/<int:player_id>', methods=['POST'])
 def remove_tournament_player(tournament_id, player_id):
