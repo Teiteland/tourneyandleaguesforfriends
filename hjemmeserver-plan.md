@@ -331,3 +331,18 @@ Sjekke alle admins:
 SELECT username, email, is_admin FROM "user" WHERE is_admin = TRUE;
 
 ---
+
+-- Migrer alle Users til Players (unngår duplikater)
+INSERT INTO player (name, is_dummy)
+SELECT u.username, FALSE
+FROM "user" u
+WHERE NOT EXISTS (
+    SELECT 1 FROM player p WHERE p.name = u.username
+);
+Kjør deretter:
+-- Verifiser migreringen
+SELECT p.id, p.name, p.is_dummy, u.username
+FROM player p
+LEFT JOIN "user" u ON p.name = u.username
+ORDER BY p.id;
+

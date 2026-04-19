@@ -555,37 +555,122 @@ def add_league_player(league_id):
         return redirect(url_for('main.manage_league_players', league_id=league_id))
     
     player_id = request.form.get('player_id')
-    if player_id:
-        player_id = int(player_id)
-        
-        for match in league.matches:
-            if match.home_player_id == player_id or match.away_player_id == player_id:
-                flash('Player is already in the league', 'error')
-                return redirect(url_for('main.manage_league_players', league_id=league_id))
-        
-        rounds = LeagueRound.query.filter_by(league_id=league_id).order_by(LeagueRound.round_number).all()
-        if rounds:
-            active_round = None
-            for r in rounds:
-                if r.is_active and not r.is_completed:
-                    active_round = r
-                    break
-                if r.is_completed:
-                    continue
-            
-            if active_round:
-                match = Match(
-                    league_id=league_id,
-                    round_id=active_round.id,
-                    home_player_id=player_id,
-                    away_player_id=None,
-                    home_track='New'
+    if not player_id:
+        return redirect(url_for('main.manage_league_players', league_id=league_id))
+    
+    player_id = int(player_id)
+    
+    for match in league.matches:
+        if match.home_player_id == player_id or match.away_player_id == player_id:
+            flash('Player is already in the league', 'error')
+            return redirect(url_for('main.manage_league_players', league_id=league_id))
+    
+    current_player_ids = set()
+    for match in league.matches:
+        if match.home_player_id:
+            current_player_ids.add(match.home_player_id)
+        if match.away_player_id:
+            current_player_ids.add(match.away_player_id)
+    
+    rounds = LeagueRound.query.filter_by(league_id=league_id).order_by(LeagueRound.round_number).all()
+    if not rounds:
+        flash('No rounds found in this league', 'error')
+        return redirect(url_for('main.manage_league_players', league_id=league_id))
+    
+    remaining_rounds = [r for r in rounds if not r.is_completed]
+    if not remaining_rounds:
+        flash('All rounds are completed', 'error')
+        return redirect(url_for('main.manage_league_players', league_id=league_id))
+    
+    new_matches = []
+    for existing_player_id in current_player_ids:
+        new_matches.append({
+            'home_player_id': player_id,
+            'away_player_id': existing_player_id,
+            'track': 'Home'
+        })
+        new_matches.append({
+            'home_player_id': existing_player_id,
+            'away_player_id': player_id,
+            'track': 'Away'
+        })
+    
+    catch_up_round = LeagueRound.query.filter_by(league_id=league_id, round_number=len(rounds) + 1).first()
+    
+    rounds_with_capacity = []
+    for r in remaining_rounds:
+        if catch_up_round and r.id == catch_up_round.id:
+            continue
+        current_matches_in_round = Match.query.filter_by(round_id=r.id, league_id=league_id).count()
+        rounds_with_capacity.append({
+            'round': r,
+            'current_count': current_matches_in_round
+        })
+    
+    matches_placed = 0
+    for match_data in new_matches:
+        placed = False
+        for round_info in rounds_with_capacity:
+            round_obj = round_info['round']
+            existing_in_round = Match.query.filter(
+                Match.league_id == league_id,
+                Match.round_id == round_obj.id,
+                db.or_(
+                    db.and_(Match.home_player_id == match_data['home_player_id'], Match.away_player_id == match_data['away_player_id']),
+                    db.and_(Match.home_player_id == match_data['away_player_id'], Match.away_player_id == match_data['home_player_id'])
                 )
-                db.session.add(match)
-                db.session.commit()
-                flash('Player added successfully', 'success')
-            else:
-                flash('No active round to add player to', 'error')
+            ).first()
+            
+            if existing_in_round:
+                continue
+            
+            match = Match(
+                league_id=league_id,
+                round_id=round_obj.id,
+                home_player_id=match_data['home_player_id'],
+                away_player_id=match_data['away_player_id'],
+                home_track=match_data['track']
+            )
+            db.session.add(match)
+            matches_placed += 1
+            placed = True
+            break
+    
+    remaining_matches = len(new_matches) - matches_placed
+    if remaining_matches > 0:
+        if not catch_up_round:
+            catch_up_round = LeagueRound(
+                league_id=league_id,
+                round_number=len(rounds) + 1,
+                is_active=False
+            )
+            db.session.add(catch_up_round)
+            db.session.flush()
+        
+        for match_data in new_matches:
+            already_exists = Match.query.filter(
+                Match.league_id == league_id,
+                Match.round_id == catch_up_round.id,
+                db.or_(
+                    db.and_(Match.home_player_id == match_data['home_player_id'], Match.away_player_id == match_data['away_player_id']),
+                    db.and_(Match.home_player_id == match_data['away_player_id'], Match.away_player_id == match_data['home_player_id'])
+                )
+            ).first()
+            
+            if already_exists:
+                continue
+            
+            match = Match(
+                league_id=league_id,
+                round_id=catch_up_round.id,
+                home_player_id=match_data['home_player_id'],
+                away_player_id=match_data['away_player_id'],
+                home_track=match_data['track']
+            )
+            db.session.add(match)
+    
+    db.session.commit()
+    flash(f'Player added with {len(new_matches)} matches', 'success')
     
     return redirect(url_for('main.manage_league_players', league_id=league_id))
 

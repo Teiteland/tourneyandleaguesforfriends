@@ -222,3 +222,8 @@ Må jeg kjøre migrering?	Kun hvis du endrer modeller
   
 ---
 postgresql://gaming_liga_db_user:NUOd7WeHt39GemE58o8PZtzQ4eRIUK0Q@dpg-d7fugtm7r5hc73fsndbg-a.frankfurt-postgres.render.com/gaming_liga_db
+
+---
+
+  Session   Project kickoff: AGENTS.md for Mario Kart 8 tourn…
+  Continue  opencode -s ses_2a34772fdffe6v7AOd84WaySrn
