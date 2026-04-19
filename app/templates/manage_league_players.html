@@ -29,7 +29,7 @@
         {% endif %}
     </section>
 
-    {% if league.status == 'active' %}
+    {% if league.status != 'active' and league.status != 'completed' %}
     <section class="available-players">
         <h3>Add Players</h3>
         {% if available_players %}
@@ -48,6 +48,10 @@
         {% else %}
         <p>No available players to add.</p>
         {% endif %}
+    </section>
+    {% elif league.status == 'active' %}
+    <section class="notice">
+        <p class="info-message">Players cannot be added after the league has started. This feature will be available in a future update.</p>
     </section>
     {% else %}
     <section class="notice">

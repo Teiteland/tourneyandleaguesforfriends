@@ -69,8 +69,8 @@
 3. **Player Management**
    - 12 auto-generated dummy players from Mario Kart universe on initialization
    - Auto-create Player when User registers
-   - Add players mid-league with full round-robin scheduling (home + away)
-   - Catch-up round: remaining matches placed in final round if no capacity in remaining rounds
+   - Add players mid-league with full round-robin scheduling (home + away) - [DISABLED - see TODO]
+   - Catch-up round: remaining matches placed in final round if no capacity in remaining rounds - [DISABLED - see TODO]
    - Player statistics tracked
 
 4. **Owner System**
@@ -304,6 +304,18 @@
 | player_id | INTEGER | Foreign key to Players |
 | placement | INTEGER | Final placement |
 | points_earned | INTEGER | Points awarded |
+
+## TODO (Future Improvements)
+
+### Add Players Mid-League
+- [ ] Fix walkover slot handling when adding players after league has started
+- [ ] Handle rounds that are already completed (move to catch-up round)
+- [ ] Test edge cases: multiple players added, odd/even player counts
+- [ ] Re-enable feature once tested
+
+### Other
+- [ ] Add player statistics dashboard
+- [ ] Add tournament seeding options
 
 ## Phase 5: Extensibility (Future)
 
