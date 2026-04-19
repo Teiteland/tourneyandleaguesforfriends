@@ -68,6 +68,9 @@
 
 3. **Player Management**
    - 12 auto-generated dummy players from Mario Kart universe on initialization
+   - Auto-create Player when User registers
+   - Add players mid-league with full round-robin scheduling (home + away)
+   - Catch-up round: remaining matches placed in final round if no capacity in remaining rounds
    - Player statistics tracked
 
 4. **Owner System**
