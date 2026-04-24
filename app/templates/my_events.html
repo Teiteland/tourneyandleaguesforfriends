@@ -9,10 +9,11 @@
         <a href="/leagues/create" class="btn btn-small">Create League</a>
         <a href="/tournaments/create" class="btn btn-small">Create Tournament</a>
         <a href="/ffa/create" class="btn btn-small">Create FFA</a>
+        <a href="/mass-start/create" class="btn btn-small">Create Mass Start</a>
     </div>
 </div>
 
-{% if leagues or tournaments or ffas %}
+{% if leagues or tournaments or ffas or mass_starts %}
 {% if leagues %}
 <section class="my-leagues-section">
     <h3>My Leagues</h3>
@@ -91,6 +92,29 @@
     </div>
     {% else %}
     <p>No FFA matches created yet.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+{% if mass_starts %}
+<section class="my-mass-starts-section">
+    <h3>My Mass Starts</h3>
+    {% if mass_starts %}
+    <div class="events-list">
+        {% for ms in mass_starts %}
+        <div class="event-card">
+            <h4><a href="/mass-start/{{ ms.id }}">{{ ms.name }}</a></h4>
+            <p>Game: {{ ms.game.name if ms.game else 'N/A' }}</p>
+            <p class="status-{{ ms.status }}">{{ ms.status }}</p>
+            <p>Created: {{ ms.created_at.strftime('%Y-%m-%d') if ms.created_at else '-' }}</p>
+            {% if ms.status == 'active' %}
+            <a href="/mass-start/{{ ms.id }}" class="btn btn-small">Manage</a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p>No Mass Starts created yet.</p>
     {% endif %}
 </section>
 {% endif %}

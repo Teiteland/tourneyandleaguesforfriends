@@ -349,11 +349,13 @@ def my_events():
     my_leagues = League.query.filter_by(owner_id=user_id).all()
     my_tournaments = Tournament.query.filter_by(owner_id=user_id).all()
     my_ffas = FFAMatch.query.filter_by(owner_id=user_id).all()
+    my_mass_starts = MassStart.query.filter_by(owner_id=user_id).all()
     
     return render_template('my_events.html', 
                          leagues=my_leagues, 
                          tournaments=my_tournaments,
-                         ffas=my_ffas)
+                         ffas=my_ffas,
+                         mass_starts=my_mass_starts)
 
 @main.route('/leagues')
 def leagues():
