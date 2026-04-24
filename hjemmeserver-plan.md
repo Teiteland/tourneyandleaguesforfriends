@@ -9,8 +9,8 @@ Mål: Kjøre Flask-app ("Spillturnering og Liga") hjemmefra med PostgreSQL-datab
 ## Del 1: Forberedelser
 
 ### 1.1 Sjekk gammel PC
-- [ ] Blås støv av maskinen
-- [ ] Test om den starter
+- [x] Blås støv av maskinen
+- [x] Test om den starter
 - [ ] Sjekk specs (CPU, RAM, disk)
 
 ### 1.2 Last ned operativsystem

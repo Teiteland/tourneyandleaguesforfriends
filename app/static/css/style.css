@@ -341,14 +341,17 @@ h3 {
 
 .status-active {
     background-color: var(--success-color);
+    color: #121212;
 }
 
 .status-completed {
     background-color: var(--text-secondary);
+    color: #121212;
 }
 
 .status-archived {
     background-color: var(--error-color);
+    color: #ffffff;
 }
 
 .status-locked {

@@ -18,7 +18,7 @@
     {% if mass_start.played_at %}
     <p>Played: {{ mass_start.played_at.strftime('%Y-%m-%d') }}</p>
     {% endif %}
-    <p class="points-info"><strong>Poengsystem:</strong> 1. plass får {{ ms_players|length }} poeng, 2. {{ ms_players|length - 1 }}, ..., siste får 1 poeng. "Not finished" gir 0 poeng.</p>
+    <p class="points-info"><strong>Points system:</strong> 1st place gets {{ ms_players|length }} points, 2nd gets {{ ms_players|length - 1 }}, ..., last gets 1 point. "Not finished" gives 0 points.</p>
 </div>
 
 <h3>Players</h3>
