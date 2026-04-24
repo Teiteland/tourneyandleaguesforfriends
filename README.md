@@ -64,6 +64,14 @@ The application will be available at `http://127.0.0.1:5000`
 - **Flexible Player Count** - Any number of players (minimum 2)
 - **Owner System** - FFA creator has management rights
 
+### Mass Start System (Phase 4b)
+
+- **Standalone Mass Start** - Create Mass Start from main page or My Events
+- **Mass Start in Leagues** - Add Mass Start rounds within leagues
+- **Scoring** - 1st place gets X points, 2nd gets X-1, ..., last gets 1, "Not finished" gets 0
+- **Flexible Player Count** - Any number of players (minimum 2)
+- **Owner System** - Creator has management rights
+
 ### Upcoming Features (Phase 5+)
 
 - Support for additional competitive games

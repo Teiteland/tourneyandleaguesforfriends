@@ -305,6 +305,51 @@
 | placement | INTEGER | Final placement |
 | points_earned | INTEGER | Points awarded |
 
+## Phase 4b: Mass Start (Implemented)
+
+### Features
+
+1. **Mass Start Creation**
+   - Standalone Mass Start (from main page or My Events)
+   - Mass Start within leagues
+
+2. **Mass Start Scoring**
+   - 1st place: X points (X = number of players)
+   - 2nd place: X-1 points
+   - ...
+   - Last place: 1 point
+   - "Not finished": 0 points
+
+3. **Mass Start Management**
+   - Manual placement entry
+   - "Not finished" checkbox for players who didn't finish
+   - Automatic points calculation
+   - Status: draft → active → completed
+
+#### MassStart Table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | Primary key |
+| league_id | INTEGER | Foreign key to Leagues (nullable) |
+| name | TEXT | Mass Start name |
+| game_id | INTEGER | Foreign key to Games |
+| owner_id | INTEGER | Foreign key to Users |
+| status | TEXT | draft/active/completed |
+| created_at | DATETIME | Creation timestamp |
+| played_at | DATETIME | Completion timestamp |
+
+#### MassStartPlayer Table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | INTEGER | Primary key |
+| mass_start_id | INTEGER | Foreign key to MassStart |
+| player_id | INTEGER | Foreign key to Players |
+| placement | INTEGER | Final placement (nullable) |
+| points_earned | INTEGER | Points awarded |
+| is_not_finished | BOOLEAN | Did not finish status |
+
 ## TODO (Future Improvements)
 
 ### Add Players Mid-League
