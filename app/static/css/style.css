@@ -141,8 +141,8 @@ footer {
 
 .quick-links .btn-large {
     flex: 1;
-    min-width: 140px;
-    max-width: 200px;
+    min-width: 150px;
+    max-width: 220px;
 }
 
 .form-container {
