@@ -136,6 +136,29 @@ class FFAPlayer(db.Model):
     ffa_match = db.relationship('FFAMatch', backref='players')
     player = db.relationship('Player', backref='ffa_results')
 
+class MassStart(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    league_id = db.Column(db.Integer, db.ForeignKey('league.id'), nullable=True)
+    name = db.Column(db.String(100), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    status = db.Column(db.String(20), default='draft')  # draft, active, completed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    played_at = db.Column(db.DateTime, nullable=True)
+    league = db.relationship('League', backref='mass_starts')
+    game = db.relationship('Game', backref='mass_starts')
+    owner = db.relationship('User', backref='owned_mass_starts')
+
+class MassStartPlayer(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    mass_start_id = db.Column(db.Integer, db.ForeignKey('mass_start.id'))
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'))
+    placement = db.Column(db.Integer, nullable=True)  # 1 = winner, 2 = second, etc.
+    points_earned = db.Column(db.Integer, default=0)
+    is_not_finished = db.Column(db.Boolean, default=False)  # True if did not finish
+    mass_start = db.relationship('MassStart', backref='players')
+    player = db.relationship('Player', backref='mass_start_results')
+
 class LeagueJoinRequest(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'))

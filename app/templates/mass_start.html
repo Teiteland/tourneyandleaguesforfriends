@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Mass Start: {{ mass_start.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Mass Start: {{ mass_start.name }}</h2>
+    {% if mass_start.league %}
+    <a href="/leagues/{{ mass_start.league_id }}" class="btn btn-small">Back to League</a>
+    {% endif %}
+</div>
+
+<div class="mass-start-status">
+    <p>Status: <span class="status-{{ mass_start.status }}">{{ mass_start.status }}</span></p>
+    {% if mass_start.game %}
+    <p>Game: {{ mass_start.game.name }}</p>
+    {% endif %}
+    {% if mass_start.played_at %}
+    <p>Played: {{ mass_start.played_at.strftime('%Y-%m-%d') }}</p>
+    {% endif %}
+    <p class="points-info"><strong>Poengsystem:</strong> 1. plass får {{ ms_players|length }} poeng, 2. {{ ms_players|length - 1 }}, ..., siste får 1 poeng. "Not finished" gir 0 poeng.</p>
+</div>
+
+<h3>Players</h3>
+{% if can_manage and mass_start.status == 'active' %}
+<form method="POST" class="mass-start-form">
+    <p class="info">Enter placement for each player (1 = winner, 2 = second, etc.) or check "Not finished"</p>
+    <div class="players-list">
+        {% for msp in ms_players %}
+        <div class="player-item">
+            <span>{{ msp.player.name }}</span>
+            <div class="player-inputs">
+                <label class="not-finished-label">
+                    <input type="checkbox" name="not_finished_{{ msp.player_id }}" {% if msp.is_not_finished %}checked{% endif %}>
+                    Not finished
+                </label>
+                <input type="number" name="placement_{{ msp.player_id }}" min="1" max="{{ ms_players|length }}" value="{{ msp.placement or '' }}" placeholder="#" {% if msp.is_not_finished %}disabled{% endif %}>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <button type="submit" class="btn-primary" onclick="return confirm('Save Mass Start results?')">Save Results</button>
+</form>
+
+{% if available_to_add %}
+<h4>Add More Players</h4>
+<p class="info">Players not yet in Mass Start:</p>
+<div class="available-players">
+    {% for player in available_to_add %}
+    <span class="player-tag">{{ player.name }}</span>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% else %}
+<div class="results-list">
+    {% for msp in ms_players %}
+    <div class="result-item {% if msp.placement == 1 %}winner{% elif msp.is_not_finished %}not-finished{% endif %}">
+        <span class="placement">#{{ msp.placement if msp.placement else '-' }}</span>
+        <span class="player-name">{{ msp.player.name }}</span>
+        <span class="points">{{ msp.points_earned }} poeng</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<style>
+.mass-start-status {
+    background: var(--surface-color);
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+}
+
+.mass-start-status p {
+    margin: 0.25rem 0;
+}
+
+.points-info {
+    color: var(--primary-color);
+    font-size: 0.9rem;
+    margin-top: 0.5rem !important;
+}
+
+.status-active {
+    color: var(--success-color);
+    font-weight: bold;
+}
+
+.status-completed {
+    color: var(--text-muted);
+    font-weight: bold;
+}
+
+.info {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.players-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.player-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--surface-color);
+    border-radius: 4px;
+}
+
+.player-inputs {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.not-finished-label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.player-item input[type="number"] {
+    width: 60px;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--surface-color);
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.result-item.winner {
+    background: var(--success-color);
+    color: white;
+}
+
+.result-item.not-finished {
+    opacity: 0.6;
+    background: var(--bg-color);
+}
+
+.result-item .placement {
+    font-weight: bold;
+    min-width: 40px;
+}
+
+.result-item .player-name {
+    flex: 1;
+}
+
+.result-item .points {
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.result-item.winner .points {
+    color: white;
+}
+
+.available-players {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.player-tag {
+    background: var(--bg-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}

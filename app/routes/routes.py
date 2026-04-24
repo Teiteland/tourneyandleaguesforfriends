@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from app.models.models import db, League, LeagueRound, Match, Player, Game, User, Tournament, TournamentMatch, TournamentPlayer, FFAMatch, FFAPlayer, LeagueJoinRequest, TournamentJoinRequest
+from app.models.models import db, League, LeagueRound, Match, Player, Game, User, Tournament, TournamentMatch, TournamentPlayer, FFAMatch, FFAPlayer, MassStart, MassStartPlayer, LeagueJoinRequest, TournamentJoinRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import uuid
@@ -1794,5 +1794,144 @@ def ffa_match(ffa_id):
         return redirect(url_for('main.ffa_match', ffa_id=ffa_id))
     
     return render_template('ffa_match.html', ffa=ffa, ffa_players=ffa_players, can_manage=can_manage, available_to_add=available_to_add)
+
+@main.route('/mass-start/create-in-league/<int:league_id>', methods=['GET', 'POST'])
+def create_mass_start_in_league(league_id):
+    if not can_manage_league(league_id):
+        flash('You do not have permission to manage this league', 'error')
+        return redirect(url_for('main.league', league_id=league_id))
+    
+    league = League.query.get_or_404(league_id)
+    games = Game.query.filter_by(allow_league=True, is_active=True).all()
+    players = Player.query.all()
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        game_id = request.form.get('game_id')
+        selected_players = request.form.getlist('players')
+        
+        if not name or not game_id:
+            flash('Name and game are required', 'error')
+            return render_template('create_mass_start.html', league=league, games=games, players=players)
+        
+        if len(selected_players) < 2:
+            flash('At least 2 players required', 'error')
+            return render_template('create_mass_start.html', league=league, games=games, players=players)
+        
+        ms = MassStart(
+            league_id=league_id,
+            name=name,
+            game_id=game_id,
+            status='active'
+        )
+        db.session.add(ms)
+        db.session.flush()
+        
+        for i, player_id in enumerate(selected_players):
+            msp = MassStartPlayer(
+                mass_start_id=ms.id,
+                player_id=int(player_id)
+            )
+            db.session.add(msp)
+        
+        db.session.commit()
+        flash(f'Mass Start "{name}" created!', 'success')
+        return redirect(url_for('main.mass_start', mass_start_id=ms.id))
+    
+    return render_template('create_mass_start.html', league=league, games=games, players=players)
+
+@main.route('/mass-start/create', methods=['GET', 'POST'])
+def create_mass_start():
+    if not session.get('user_id'):
+        flash('Please log in to create a Mass Start', 'error')
+        return redirect(url_for('main.login'))
+    
+    games = Game.query.filter_by(allow_league=True, is_active=True).all()
+    players = Player.query.all()
+    
+    if request.method == 'POST':
+        name = request.form.get('name')
+        game_id = request.form.get('game_id')
+        selected_players = request.form.getlist('players')
+        
+        if not name or not game_id:
+            flash('Name and game are required', 'error')
+            return render_template('create_mass_start.html', league=None, games=games, players=players)
+        
+        if len(selected_players) < 2:
+            flash('At least 2 players required', 'error')
+            return render_template('create_mass_start.html', league=None, games=games, players=players)
+        
+        ms = MassStart(
+            name=name,
+            game_id=game_id,
+            owner_id=session['user_id'],
+            status='active'
+        )
+        db.session.add(ms)
+        db.session.flush()
+        
+        for i, player_id in enumerate(selected_players):
+            msp = MassStartPlayer(
+                mass_start_id=ms.id,
+                player_id=int(player_id)
+            )
+            db.session.add(msp)
+        
+        db.session.commit()
+        flash(f'Mass Start "{name}" created!', 'success')
+        return redirect(url_for('main.mass_start', mass_start_id=ms.id))
+    
+    return render_template('create_mass_start.html', league=None, games=games, players=players)
+
+@main.route('/mass-start')
+def mass_start_list():
+    massStarts = MassStart.query.filter_by(league_id=None).order_by(MassStart.created_at.desc()).all()
+    return render_template('mass_start_list.html', massStarts=massStarts)
+
+@main.route('/mass-start/<int:mass_start_id>', methods=['GET', 'POST'])
+def mass_start(mass_start_id):
+    ms = MassStart.query.get_or_404(mass_start_id)
+    can_manage = session.get('user_id') and (ms.owner_id == session['user_id'] or session.get('is_admin'))
+    ms_players = MassStartPlayer.query.filter_by(mass_start_id=mass_start_id).order_by(MassStartPlayer.placement).all()
+    all_players = Player.query.all()
+    
+    current_player_ids = [msp.player_id for msp in ms_players]
+    available_to_add = [p for p in all_players if p.id not in current_player_ids]
+    
+    if request.method == 'POST' and can_manage and ms.status == 'active':
+        player_count = len(ms_players)
+        
+        for msp in ms_players:
+            placement_key = f'placement_{msp.player_id}'
+            not_finished_key = f'not_finished_{msp.player_id}'
+            
+            not_finished = request.form.get(not_finished_key)
+            placement = request.form.get(placement_key)
+            
+            if not_finished == 'on':
+                msp.is_not_finished = True
+                msp.placement = None
+                msp.points_earned = 0
+            elif placement:
+                msp.is_not_finished = False
+                msp.placement = int(placement)
+                msp.points_earned = player_count - msp.placement + 1
+        
+        ms.status = 'completed'
+        ms.played_at = datetime.utcnow()
+        db.session.commit()
+        flash('Mass Start result saved!', 'success')
+        return redirect(url_for('main.mass_start', mass_start_id=mass_start_id))
+    
+    return render_template('mass_start.html', mass_start=ms, ms_players=ms_players, can_manage=can_manage, available_to_add=available_to_add)
+
+def can_manage_mass_start(mass_start_id):
+    if not session.get('user_id'):
+        return False
+    if session.get('is_admin'):
+        return True
+    ms = MassStart.query.get(mass_start_id)
+    return ms and ms.owner_id == session['user_id']
 
 import math
