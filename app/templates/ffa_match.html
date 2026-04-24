@@ -18,7 +18,13 @@
     {% if ffa.played_at %}
     <p>Played: {{ ffa.played_at.strftime('%Y-%m-%d') }}</p>
     {% endif %}
-    <p class="points-info"><strong>Poengsystem:</strong> 1. plass får {{ ffa_players|length // 2 }} poeng, alle andre får 1 poeng</p>
+    <p class="points-info"><strong>Points system:</strong> 1st place gets {{ ffa_players|length // 2 }} points, all others get 1 point</p>
+    
+    {% if can_manage and ffa.status == 'active' %}
+    <form method="POST" action="/ffa/{{ ffa.id }}/end" style="margin-top: 1rem;">
+        <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('End this FFA?')">End FFA</button>
+    </form>
+    {% endif %}
 </div>
 
 <h3>Players</h3>

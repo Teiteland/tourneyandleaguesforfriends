@@ -118,6 +118,7 @@ class FFAMatch(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'), nullable=True)
     name = db.Column(db.String(100), nullable=False)
+    round_number = db.Column(db.Integer, nullable=True)  # Associated round number when created in a league
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     status = db.Column(db.String(20), default='draft')  # draft, active, completed
@@ -140,6 +141,7 @@ class MassStart(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'), nullable=True)
     name = db.Column(db.String(100), nullable=False)
+    round_number = db.Column(db.Integer, nullable=True)  # Associated round number when created in a league
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     status = db.Column(db.String(20), default='draft')  # draft, active, completed

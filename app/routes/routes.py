@@ -407,6 +407,24 @@ def league(league_id):
         matches = Match.query.filter_by(round_id=round_obj.id).all()
         matches_by_round[round_obj.round_number] = matches
     
+    # Get FFA matches for this league, grouped by round_number
+    ffas_by_round = {}
+    ffas = FFAMatch.query.filter_by(league_id=league_id).all()
+    for ffa in ffas:
+        if ffa.round_number:
+            if ffa.round_number not in ffas_by_round:
+                ffas_by_round[ffa.round_number] = []
+            ffas_by_round[ffa.round_number].append(ffa)
+    
+    # Get Mass Starts for this league, grouped by round_number
+    mass_starts_by_round = {}
+    mass_starts = MassStart.query.filter_by(league_id=league_id).all()
+    for ms in mass_starts:
+        if ms.round_number:
+            if ms.round_number not in mass_starts_by_round:
+                mass_starts_by_round[ms.round_number] = []
+            mass_starts_by_round[ms.round_number].append(ms)
+    
     standings = calculate_standings(league_id)
     can_manage = can_manage_league(league_id)
     
@@ -418,7 +436,8 @@ def league(league_id):
     
     return render_template('league.html', league=league, rounds=rounds, 
                            matches_by_round=matches_by_round, standings=standings,
-                           can_manage=can_manage, own_profile=own_profile)
+                           can_manage=can_manage, own_profile=own_profile,
+                           ffas_by_round=ffas_by_round, mass_starts_by_round=mass_starts_by_round)
 
 @main.route('/leagues/<int:league_id>/round/<int:round_number>/activate')
 def activate_round(league_id, round_number):
@@ -1678,6 +1697,14 @@ def create_ffa_in_league(league_id):
     games = Game.query.filter_by(allow_league=True, is_active=True).all()
     players = Player.query.all()
     
+    # Find the next available round number
+    rounds = LeagueRound.query.filter_by(league_id=league_id).order_by(LeagueRound.round_number).all()
+    next_round = 1
+    for r in rounds:
+        if not r.is_completed:
+            next_round = r.round_number
+            break
+    
     if request.method == 'POST':
         name = request.form.get('name')
         game_id = request.form.get('game_id')
@@ -1691,9 +1718,23 @@ def create_ffa_in_league(league_id):
             flash('At least 2 players required', 'error')
             return render_template('create_ffa.html', league=league, games=games, players=players)
         
+        # Check for existing name in this round and auto-suffix if needed
+        base_name = name
+        suffix_char = ''
+        existing_names = [ffa.name for ffa in FFAMatch.query.filter_by(league_id=league_id, round_number=next_round).all()]
+        while f'{base_name} {suffix_char}'.strip() in existing_names:
+            if not suffix_char:
+                suffix_char = '(A)'
+            elif suffix_char == '(Z)':
+                suffix_char = '(AA)'
+            else:
+                suffix_char = chr(ord(suffix_char[1]) + 1) + ')'
+        final_name = f'{base_name} {suffix_char}'.strip()
+        
         ffa = FFAMatch(
             league_id=league_id,
-            name=name,
+            round_number=next_round,
+            name=final_name,
             game_id=game_id,
             status='active'
         )
@@ -1708,7 +1749,7 @@ def create_ffa_in_league(league_id):
             db.session.add(fp)
         
         db.session.commit()
-        flash(f'FFA match "{name}" created!', 'success')
+        flash(f'FFA match "{final_name}" created!', 'success')
         return redirect(url_for('main.league', league_id=league_id))
     
     return render_template('create_ffa.html', league=league, games=games, players=players)
@@ -1795,6 +1836,23 @@ def ffa_match(ffa_id):
     
     return render_template('ffa_match.html', ffa=ffa, ffa_players=ffa_players, can_manage=can_manage, available_to_add=available_to_add)
 
+@main.route('/ffa/<int:ffa_id>/end', methods=['POST'])
+def end_ffa(ffa_id):
+    ffa = FFAMatch.query.get_or_404(ffa_id)
+    
+    if not can_manage_ffa(ffa_id):
+        flash('You do not have permission to manage this FFA', 'error')
+        return redirect(url_for('main.ffa_match', ffa_id=ffa_id))
+    
+    ffa.status = 'completed'
+    ffa.played_at = datetime.utcnow()
+    db.session.commit()
+    flash(f'FFA "{ffa.name}" ended', 'success')
+    
+    if ffa.league_id:
+        return redirect(url_for('main.league', league_id=ffa.league_id))
+    return redirect(url_for('main.ffa_match', ffa_id=ffa_id))
+
 @main.route('/mass-start/create-in-league/<int:league_id>', methods=['GET', 'POST'])
 def create_mass_start_in_league(league_id):
     if not can_manage_league(league_id):
@@ -1804,6 +1862,14 @@ def create_mass_start_in_league(league_id):
     league = League.query.get_or_404(league_id)
     games = Game.query.filter_by(allow_league=True, is_active=True).all()
     players = Player.query.all()
+    
+    # Find the next available round number
+    rounds = LeagueRound.query.filter_by(league_id=league_id).order_by(LeagueRound.round_number).all()
+    next_round = 1
+    for r in rounds:
+        if not r.is_completed:
+            next_round = r.round_number
+            break
     
     if request.method == 'POST':
         name = request.form.get('name')
@@ -1818,9 +1884,23 @@ def create_mass_start_in_league(league_id):
             flash('At least 2 players required', 'error')
             return render_template('create_mass_start.html', league=league, games=games, players=players)
         
+        # Check for existing name in this round and auto-suffix if needed
+        base_name = name
+        suffix_char = ''
+        existing_names = [ms.name for ms in MassStart.query.filter_by(league_id=league_id, round_number=next_round).all()]
+        while f'{base_name} {suffix_char}'.strip() in existing_names:
+            if not suffix_char:
+                suffix_char = '(A)'
+            elif suffix_char == '(Z)':
+                suffix_char = '(AA)'
+            else:
+                suffix_char = chr(ord(suffix_char[1]) + 1) + ')'
+        final_name = f'{base_name} {suffix_char}'.strip()
+        
         ms = MassStart(
             league_id=league_id,
-            name=name,
+            round_number=next_round,
+            name=final_name,
             game_id=game_id,
             status='active'
         )
@@ -1835,7 +1915,7 @@ def create_mass_start_in_league(league_id):
             db.session.add(msp)
         
         db.session.commit()
-        flash(f'Mass Start "{name}" created!', 'success')
+        flash(f'Mass Start "{final_name}" created!', 'success')
         return redirect(url_for('main.mass_start', mass_start_id=ms.id))
     
     return render_template('create_mass_start.html', league=league, games=games, players=players)
@@ -1925,6 +2005,23 @@ def mass_start(mass_start_id):
         return redirect(url_for('main.mass_start', mass_start_id=mass_start_id))
     
     return render_template('mass_start.html', mass_start=ms, ms_players=ms_players, can_manage=can_manage, available_to_add=available_to_add)
+
+@main.route('/mass-start/<int:mass_start_id>/end', methods=['POST'])
+def end_mass_start(mass_start_id):
+    ms = MassStart.query.get_or_404(mass_start_id)
+    
+    if not can_manage_mass_start(mass_start_id):
+        flash('You do not have permission to manage this Mass Start', 'error')
+        return redirect(url_for('main.mass_start', mass_start_id=mass_start_id))
+    
+    ms.status = 'completed'
+    ms.played_at = datetime.utcnow()
+    db.session.commit()
+    flash(f'Mass Start "{ms.name}" ended', 'success')
+    
+    if ms.league_id:
+        return redirect(url_for('main.league', league_id=ms.league_id))
+    return redirect(url_for('main.mass_start', mass_start_id=mass_start_id))
 
 def can_manage_mass_start(mass_start_id):
     if not session.get('user_id'):

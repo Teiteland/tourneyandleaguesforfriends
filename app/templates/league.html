@@ -57,7 +57,7 @@
     
     <div class="round-tabs">
         {% for round_obj in rounds %}
-        <button class="round-tab {% if round_obj.is_active %}active{% endif %}" data-round="{{ round_obj.round_number }}">
+        <button class="round-tab {% if round_obj.is_active %}active{% endif %}" data-round="r{{ round_obj.round_number }}">
             Round {{ round_obj.round_number }}
             {% if round_obj.is_completed %}
             <span class="round-status-badge completed">✓</span>
@@ -66,6 +66,20 @@
             {% else %}
             <span class="round-status-badge locked">🔒</span>
             {% endif %}
+        </button>
+        {% endfor %}
+        
+        {% for ffa in ffas_by_round.values()|flatten %}
+        <button class="round-tab" data-round="ffa{{ ffa.id }}">
+            {{ ffa.name }}
+            <span class="round-status-badge {% if ffa.status == 'active' %}active{% elif ffa.status == 'completed' %}completed{% else %}locked{% endif %}">{% if ffa.status == 'active' %}●{% elif ffa.status == 'completed' %}✓{% else %}🔒{% endif %}</span>
+        </button>
+        {% endfor %}
+        
+        {% for ms in mass_starts_by_round.values()|flatten %}
+        <button class="round-tab" data-round="ms{{ ms.id }}">
+            {{ ms.name }}
+            <span class="round-status-badge {% if ms.status == 'active' %}active{% elif ms.status == 'completed' %}completed{% else %}locked{% endif %}">{% if ms.status == 'active' %}●{% elif ms.status == 'completed' %}✓{% else %}🔒{% endif %}</span>
         </button>
         {% endfor %}
     </div>
@@ -147,6 +161,26 @@
         </div>
     </div>
     {% endfor %}
+    
+    {% for ffa in ffas_by_round.values()|flatten %}
+    <div class="round-content" id="ffa{{ ffa.id }}">
+        <h4>
+            {{ ffa.name }}
+            <span class="badge {% if ffa.status == 'active' %}status-active{% elif ffa.status == 'completed' %}status-completed{% else %}status-locked{% endif %}">{{ ffa.status|capitalize }}</span>
+        </h4>
+        <p><a href="/ffa/{{ ffa.id }}" class="btn btn-small">View FFA</a></p>
+    </div>
+    {% endfor %}
+    
+    {% for ms in mass_starts_by_round.values()|flatten %}
+    <div class="round-content" id="ms{{ ms.id }}">
+        <h4>
+            {{ ms.name }}
+            <span class="badge {% if ms.status == 'active' %}status-active{% elif ms.status == 'completed' %}status-completed{% else %}status-locked{% endif %}">{{ ms.status|capitalize }}</span>
+        </h4>
+        <p><a href="/mass-start/{{ ms.id }}" class="btn btn-small">View Mass Start</a></p>
+    </div>
+    {% endfor %}
 </section>
 
 {% if can_manage and league.status == 'active' %}
@@ -162,16 +196,36 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.querySelectorAll('.round-tab');
     const contents = document.querySelectorAll('.round-content');
     
-    function showRound(roundNum) {
+    function showRound(roundId) {
         tabs.forEach(t => t.classList.remove('active'));
         contents.forEach(c => c.classList.remove('active'));
         
-        const tab = document.querySelector(`.round-tab[data-round="${roundNum}"]`);
-        const content = document.getElementById(`round-${roundNum}`);
-        
-        if (tab && content) {
-            tab.classList.add('active');
-            content.classList.add('active');
+        // Handle round tabs (r1, r2, etc.)
+        if (roundId.startsWith('r')) {
+            const tab = document.querySelector(`.round-tab[data-round="${roundId}"]`);
+            const content = document.getElementById(`round-${roundId.replace('r', '')}`);
+            if (tab && content) {
+                tab.classList.add('active');
+                content.classList.add('active');
+            }
+        }
+        // Handle FFA tabs (ffa1, ffa2, etc.)
+        else if (roundId.startsWith('ffa')) {
+            const tab = document.querySelector(`.round-tab[data-round="${roundId}"]`);
+            const content = document.getElementById(roundId);
+            if (tab && content) {
+                tab.classList.add('active');
+                content.classList.add('active');
+            }
+        }
+        // Handle Mass Start tabs (ms1, ms2, etc.)
+        else if (roundId.startsWith('ms')) {
+            const tab = document.querySelector(`.round-tab[data-round="${roundId}"]`);
+            const content = document.getElementById(roundId);
+            if (tab && content) {
+                tab.classList.add('active');
+                content.classList.add('active');
+            }
         }
     }
     

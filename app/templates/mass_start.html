@@ -19,6 +19,12 @@
     <p>Played: {{ mass_start.played_at.strftime('%Y-%m-%d') }}</p>
     {% endif %}
     <p class="points-info"><strong>Points system:</strong> 1st place gets {{ ms_players|length }} points, 2nd gets {{ ms_players|length - 1 }}, ..., last gets 1 point. "Not finished" gives 0 points.</p>
+    
+    {% if can_manage and mass_start.status == 'active' %}
+    <form method="POST" action="/mass-start/{{ mass_start.id }}/end" style="margin-top: 1rem;">
+        <button type="submit" class="btn btn-small btn-danger" onclick="return confirm('End this Mass Start?')">End Mass Start</button>
+    </form>
+    {% endif %}
 </div>
 
 <h3>Players</h3>
