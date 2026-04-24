@@ -69,14 +69,14 @@
         </button>
         {% endfor %}
         
-        {% for ffa in ffas_by_round.values()|flatten %}
+        {% for ffa in ffas_all %}
         <button class="round-tab" data-round="ffa{{ ffa.id }}">
             {{ ffa.name }}
             <span class="round-status-badge {% if ffa.status == 'active' %}active{% elif ffa.status == 'completed' %}completed{% else %}locked{% endif %}">{% if ffa.status == 'active' %}●{% elif ffa.status == 'completed' %}✓{% else %}🔒{% endif %}</span>
         </button>
         {% endfor %}
         
-        {% for ms in mass_starts_by_round.values()|flatten %}
+        {% for ms in mass_starts_all %}
         <button class="round-tab" data-round="ms{{ ms.id }}">
             {{ ms.name }}
             <span class="round-status-badge {% if ms.status == 'active' %}active{% elif ms.status == 'completed' %}completed{% else %}locked{% endif %}">{% if ms.status == 'active' %}●{% elif ms.status == 'completed' %}✓{% else %}🔒{% endif %}</span>
@@ -162,7 +162,7 @@
     </div>
     {% endfor %}
     
-    {% for ffa in ffas_by_round.values()|flatten %}
+    {% for ffa in ffas_all %}
     <div class="round-content" id="ffa{{ ffa.id }}">
         <h4>
             {{ ffa.name }}
@@ -172,7 +172,7 @@
     </div>
     {% endfor %}
     
-    {% for ms in mass_starts_by_round.values()|flatten %}
+    {% for ms in mass_starts_all %}
     <div class="round-content" id="ms{{ ms.id }}">
         <h4>
             {{ ms.name }}

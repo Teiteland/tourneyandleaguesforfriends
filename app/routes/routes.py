@@ -427,6 +427,15 @@ def league(league_id):
                 mass_starts_by_round[ms.round_number] = []
             mass_starts_by_round[ms.round_number].append(ms)
     
+    # Flatten ffas and mass starts for template
+    ffas_all = []
+    for ffa_list in ffas_by_round.values():
+        ffas_all.extend(ffa_list)
+    
+    mass_starts_all = []
+    for ms_list in mass_starts_by_round.values():
+        mass_starts_all.extend(ms_list)
+    
     standings = calculate_standings(league_id)
     can_manage = can_manage_league(league_id)
     
@@ -439,7 +448,7 @@ def league(league_id):
     return render_template('league.html', league=league, rounds=rounds, 
                            matches_by_round=matches_by_round, standings=standings,
                            can_manage=can_manage, own_profile=own_profile,
-                           ffas_by_round=ffas_by_round, mass_starts_by_round=mass_starts_by_round)
+                           ffas_all=ffas_all, mass_starts_all=mass_starts_all)
 
 @main.route('/leagues/<int:league_id>/round/<int:round_number>/activate')
 def activate_round(league_id, round_number):
