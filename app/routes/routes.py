@@ -6,6 +6,8 @@ import uuid
 import subprocess
 import os
 import math
+import hmac
+import hashlib
 
 main = Blueprint('main', __name__)
 
@@ -2046,14 +2048,15 @@ def can_manage_mass_start(mass_start_id):
 
 @main.route('/webhook', methods=['POST'])
 def webhook():
-    SECRET = 'tourney_webhook_3f8a2b9c1d'
-
-    if request.headers.get('X-Webhook-Secret') != SECRET:
+    SECRET = b'ASUhnjasgds6798o3h2AS'
+    signature = request.headers.get('X-Hub-Signature-256', '')
+    expected = 'sha256=' + hmac.new(SECRET, request.data, hashlib.sha256).hexdigest()
+    
+    if not hmac.compare_digest(signature, expected):
         return 'Unauthorized', 401
-
-    data = request.json
-    if data and data.get('ref') == 'refs/heads/main':
+    
+    if request.json.get('ref') == 'refs/heads/main':
         os.chdir('/opt/tourneyandleaguesforfriends')
         subprocess.Popen(['/bin/bash', 'deploy.sh'])
-
+    
     return 'OK', 200
