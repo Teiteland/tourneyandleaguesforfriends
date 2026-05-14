@@ -3,6 +3,8 @@ from app.models.models import db, League, LeagueRound, Match, Player, Game, User
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import uuid
+import subprocess
+import os
 import math
 
 main = Blueprint('main', __name__)
@@ -2042,4 +2044,16 @@ def can_manage_mass_start(mass_start_id):
     ms = MassStart.query.get(mass_start_id)
     return ms and ms.owner_id == session['user_id']
 
-import math
+@main.route('/webhook', methods=['POST'])
+def webhook():
+    SECRET = 'tourney_webhook_3f8a2b9c1d'
+
+    if request.headers.get('X-Webhook-Secret') != SECRET:
+        return 'Unauthorized', 401
+
+    data = request.json
+    if data and data.get('ref') == 'refs/heads/main':
+        os.chdir('/opt/tourneyandleaguesforfriends')
+        subprocess.Popen(['/bin/bash', 'deploy.sh'])
+
+    return 'OK', 200
