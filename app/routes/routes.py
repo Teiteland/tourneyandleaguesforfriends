@@ -380,22 +380,37 @@ def create_league():
     if request.method == 'POST':
         name = request.form.get('name')
         game_id = request.form.get('game_id')
+        league_format = request.form.get('format', 'round_robin')
+        num_rounds = int(request.form.get('num_rounds', 1))
         selected_players = request.form.getlist('players')
         
         if not name or not game_id:
             flash('Name and game are required', 'error')
             return render_template('create_league.html', games=games, players=players)
         
+        if league_format == 'ffa' and len(selected_players) < 2:
+            flash('FFA league requires at least 2 players', 'error')
+            return render_template('create_league.html', games=games, players=players)
+        
+        if league_format == 'ffa' and (num_rounds < 1 or num_rounds > 99):
+            flash('Number of rounds must be between 1 and 99', 'error')
+            return render_template('create_league.html', games=games, players=players)
+        
         league = League(
             name=name,
             game_id=game_id,
+            format=league_format,
+            num_rounds=num_rounds,
             owner_id=session['user_id'],
             unique_id=uuid.uuid4().hex[:12]
         )
         db.session.add(league)
         db.session.flush()
         
-        generate_round_robin(league, selected_players)
+        if league_format == 'ffa':
+            generate_ffa_rounds(league, num_rounds, selected_players)
+        else:
+            generate_round_robin(league, selected_players)
         
         db.session.commit()
         flash(f'League "{name}" created successfully!', 'success')
@@ -406,6 +421,9 @@ def create_league():
 @main.route('/leagues/<int:league_id>')
 def league(league_id):
     league = League.query.get_or_404(league_id)
+    
+    is_ffa_league = league.format == 'ffa'
+    
     rounds = LeagueRound.query.filter_by(league_id=league_id).order_by(LeagueRound.round_number).all()
     
     matches_by_round = {}
@@ -440,6 +458,9 @@ def league(league_id):
     for ms_list in mass_starts_by_round.values():
         mass_starts_all.extend(ms_list)
     
+    # For FFA leagues, ordered rounds
+    ffa_rounds = FFAMatch.query.filter_by(league_id=league_id).order_by(FFAMatch.round_number).all() if is_ffa_league else []
+    
     standings = calculate_standings(league_id)
     can_manage = can_manage_league(league_id)
     
@@ -452,7 +473,8 @@ def league(league_id):
     return render_template('league.html', league=league, rounds=rounds, 
                            matches_by_round=matches_by_round, standings=standings,
                            can_manage=can_manage, own_profile=own_profile,
-                           ffas_all=ffas_all, mass_starts_all=mass_starts_all)
+                           ffas_all=ffas_all, mass_starts_all=mass_starts_all,
+                           ffa_rounds=ffa_rounds, is_ffa_league=is_ffa_league)
 
 @main.route('/leagues/<int:league_id>/round/<int:round_number>/activate')
 def activate_round(league_id, round_number):
@@ -537,6 +559,35 @@ def _auto_activate_next_round(league_id):
         
         if next_round and not next_round.is_active:
             next_round.is_active = True
+            db.session.commit()
+
+def _advance_ffa_league(league_id, completed_ffa_id):
+    """Auto-activate next FFA round or end league when all rounds complete."""
+    league = League.query.get(league_id)
+    if not league or league.format != 'ffa':
+        return
+
+    completed_ffa = FFAMatch.query.get(completed_ffa_id)
+    if not completed_ffa or not completed_ffa.round_number:
+        return
+
+    # Find next uncompleted FFA round
+    next_ffa = FFAMatch.query.filter(
+        FFAMatch.league_id == league_id,
+        FFAMatch.status != 'completed',
+        FFAMatch.round_number > completed_ffa.round_number
+    ).order_by(FFAMatch.round_number).first()
+
+    if next_ffa:
+        next_ffa.status = 'active'
+        db.session.commit()
+    else:
+        # All rounds completed - end the league
+        all_ffas = FFAMatch.query.filter_by(league_id=league_id).all()
+        all_done = all(f.status == 'completed' for f in all_ffas)
+        if all_done:
+            league.status = 'completed'
+            league.ended_at = datetime.utcnow()
             db.session.commit()
 
 @main.route('/leagues/<int:league_id>/end')
@@ -1113,8 +1164,61 @@ def generate_round_robin(league, player_ids):
         
         players = [players[0]] + [players[-1]] + players[1:-1]
 
+def generate_ffa_rounds(league, num_rounds, player_ids):
+    for round_num in range(num_rounds):
+        ffa = FFAMatch(
+            league_id=league.id,
+            round_number=round_num + 1,
+            name=f'Round {round_num + 1}',
+            game_id=league.game_id,
+            status='draft'
+        )
+        db.session.add(ffa)
+        db.session.flush()
+
+        for player_id in player_ids:
+            fp = FFAPlayer(
+                ffa_match_id=ffa.id,
+                player_id=int(player_id)
+            )
+            db.session.add(fp)
+
+    # Activate first round
+    first_ffa = FFAMatch.query.filter_by(league_id=league.id, round_number=1).first()
+    if first_ffa:
+        first_ffa.status = 'active'
+        db.session.add(first_ffa)
+
 def calculate_standings(league_id):
     league = League.query.get_or_404(league_id)
+
+    if league.format == 'ffa':
+        ffas = FFAMatch.query.filter_by(league_id=league_id).filter(FFAMatch.status == 'completed').all()
+        standings = {}
+
+        for ffa in ffas:
+            for fp in ffa.players:
+                if fp.player_id not in standings:
+                    player = Player.query.get(fp.player_id)
+                    standings[fp.player_id] = {
+                        'player_id': fp.player_id,
+                        'name': player.name,
+                        'played': 0,
+                        'points': 0,
+                        'best_placement': None
+                    }
+                standings[fp.player_id]['played'] += 1
+                standings[fp.player_id]['points'] += fp.points_earned
+                if standings[fp.player_id]['best_placement'] is None or fp.placement < standings[fp.player_id]['best_placement']:
+                    standings[fp.player_id]['best_placement'] = fp.placement
+
+        sorted_standings = sorted(standings.values(), key=lambda x: (-x['points'], x['best_placement'] or 999))
+
+        for i, s in enumerate(sorted_standings):
+            s['position'] = i + 1
+
+        return sorted_standings
+
     matches = Match.query.filter_by(league_id=league_id).all()
     
     standings = {}
@@ -1846,6 +1950,11 @@ def ffa_match(ffa_id):
         ffa.status = 'completed'
         ffa.played_at = datetime.utcnow()
         db.session.commit()
+
+        # If this FFA belongs to an FFA league, handle progression
+        if ffa.league_id:
+            _advance_ffa_league(ffa.league_id, ffa.id)
+
         flash('FFA result saved!', 'success')
         return redirect(url_for('main.ffa_match', ffa_id=ffa_id))
     
@@ -1865,6 +1974,7 @@ def end_ffa(ffa_id):
     flash(f'FFA "{ffa.name}" ended', 'success')
     
     if ffa.league_id:
+        _advance_ffa_league(ffa.league_id, ffa.id)
         return redirect(url_for('main.league', league_id=ffa.league_id))
     return redirect(url_for('main.ffa_match', ffa_id=ffa_id))
 
@@ -2048,7 +2158,7 @@ def can_manage_mass_start(mass_start_id):
 
 @main.route('/webhook', methods=['POST'])
 def webhook():
-    SECRET = b'ASUhnjasgds6798o3h2AS'
+    SECRET = os.environ.get('WEBHOOK_SECRET', '').encode().strip()
     signature = request.headers.get('X-Hub-Signature-256', '')
     expected = 'sha256=' + hmac.new(SECRET, request.data, hashlib.sha256).hexdigest()
     

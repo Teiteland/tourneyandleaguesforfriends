@@ -31,6 +31,8 @@ class League(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
+    format = db.Column(db.String(20), default='round_robin')  # round_robin, ffa
+    num_rounds = db.Column(db.Integer, default=1)
     status = db.Column(db.String(20), default='active')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     ended_at = db.Column(db.DateTime, nullable=True)
