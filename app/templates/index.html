@@ -9,13 +9,9 @@
     <a href="/leagues" class="btn btn-large">Leagues</a>
     <a href="/ffa" class="btn btn-large">FFA</a>
     <a href="/mass-start" class="btn btn-large">Mass Start</a>
-    <a href="/games" class="btn btn-large">Games</a>
     <a href="/players" class="btn btn-large">Players</a>
     <a href="/my-events" class="btn btn-large">My Events</a>
     <a href="/profile" class="btn btn-large">Profile</a>
-    {% if session.get('is_admin') %}
-        <a href="/admin/games" class="btn btn-large btn-admin">Manage Games</a>
-    {% endif %}
 </div>
 
 {% if leagues %}
@@ -24,7 +20,7 @@
     {% for league in leagues[:3] %}
     <div class="league-card">
         <h3><a href="/leagues/{{ league.id }}">{{ league.name }}</a></h3>
-        <p class="league-game">{{ league.game.name if league.game else 'No game' }}</p>
+        <p class="league-game">{{ league.game_name or 'No game' }}</p>
         <p class="league-status status-{{ league.status }}">{{ league.status }}</p>
     </div>
     {% endfor %}
@@ -37,7 +33,7 @@
     {% for tournament in tournaments[:3] %}
     <div class="tournament-card">
         <h3><a href="/tournaments/{{ tournament.id }}">{{ tournament.name }}</a></h3>
-        <p class="tournament-game">{{ tournament.game.name if tournament.game else 'No game' }}</p>
+        <p class="tournament-game">{{ tournament.game_name or 'No game' }}</p>
         <p class="tournament-format">
             {% if tournament.format == 'single_elimination' %}
                 Single Elimination

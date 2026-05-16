@@ -13,7 +13,7 @@
 <div class="mass-start-status">
     <p>Status: <span class="status-{{ mass_start.status }}">{{ mass_start.status }}</span></p>
     {% if mass_start.game %}
-    <p>Game: {{ mass_start.game.name }}</p>
+    <p>Game: {{ mass_start.game_name or 'N/A' }}</p>
     {% endif %}
     {% if mass_start.played_at %}
     <p>Played: {{ mass_start.played_at.strftime('%Y-%m-%d') }}</p>

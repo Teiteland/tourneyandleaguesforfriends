@@ -15,7 +15,7 @@
         {% for tournament in tournaments %}
             <div class="tournament-card">
                 <h3><a href="/tournaments/{{ tournament.id }}">{{ tournament.name }}</a></h3>
-                <p class="tournament-game">{{ tournament.game.name if tournament.game else 'No game' }}</p>
+                <p class="tournament-game">{{ tournament.game_name or 'No game' }}</p>
                 <p class="tournament-format">Format: 
                     {% if tournament.format == 'single_elimination' %}
                         Single Elimination

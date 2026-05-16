@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h2>{{ tournament.name }}</h2>
-    <p class="tournament-game">Game: {{ tournament.game.name if tournament.game else 'N/A' }}</p>
+    <p class="tournament-game">Game: {{ tournament.game_name or 'N/A' }}</p>
     <p class="tournament-format">
         {% if tournament.format == 'single_elimination' %}
             Single Elimination

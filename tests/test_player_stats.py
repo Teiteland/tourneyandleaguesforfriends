@@ -1,6 +1,6 @@
 import pytest
 from app import create_app
-from app.models.models import db, Player, Game, League, LeagueRound, Match, User
+from app.models.models import db, Player, League, LeagueRound, Match, User
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 
@@ -21,10 +21,6 @@ def client(app):
 
 def create_test_data(app):
     with app.app_context():
-        game = Game(name='Mario Kart 8 Deluxe', platform='Nintendo Switch')
-        db.session.add(game)
-        db.session.flush()
-        
         players = [
             Player(name='Mario', is_dummy=True),
             Player(name='Luigi', is_dummy=True),
@@ -36,7 +32,7 @@ def create_test_data(app):
         
         db.session.flush()
         
-        league = League(name='Test Season 1', game_id=game.id)
+        league = League(name='Test Season 1', game_name='Mario Kart 8 Deluxe')
         db.session.add(league)
         db.session.flush()
         

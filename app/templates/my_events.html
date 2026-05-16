@@ -22,7 +22,7 @@
         {% for league in leagues %}
         <div class="event-card">
             <h4><a href="/leagues/{{ league.id }}">{{ league.name }}</a></h4>
-            <p>Game: {{ league.game.name if league.game else 'N/A' }}</p>
+            <p>Game: {{ league.game_name or 'N/A' }}</p>
             <p class="status-{{ league.status }}">{{ league.status }}</p>
             <p>Created: {{ league.created_at.strftime('%Y-%m-%d') if league.created_at else '-' }}</p>
             {% if league.status == 'active' %}
@@ -46,7 +46,7 @@
         {% for tournament in tournaments %}
         <div class="event-card">
             <h4><a href="/tournaments/{{ tournament.id }}">{{ tournament.name }}</a></h4>
-            <p>Game: {{ tournament.game.name if tournament.game else 'N/A' }}</p>
+            <p>Game: {{ tournament.game_name or 'N/A' }}</p>
             <p>
                 {% if tournament.format == 'single_elimination' %}
                 Single Elimination
@@ -81,7 +81,7 @@
         {% for ffa in ffas %}
         <div class="event-card">
             <h4><a href="/ffa/{{ ffa.id }}">{{ ffa.name }}</a></h4>
-            <p>Game: {{ ffa.game.name if ffa.game else 'N/A' }}</p>
+            <p>Game: {{ ffa.game_name or 'N/A' }}</p>
             <p class="status-{{ ffa.status }}">{{ ffa.status }}</p>
             <p>Created: {{ ffa.created_at.strftime('%Y-%m-%d') if ffa.created_at else '-' }}</p>
             {% if ffa.status == 'active' %}
@@ -104,7 +104,7 @@
         {% for ms in mass_starts %}
         <div class="event-card">
             <h4><a href="/mass-start/{{ ms.id }}">{{ ms.name }}</a></h4>
-            <p>Game: {{ ms.game.name if ms.game else 'N/A' }}</p>
+            <p>Game: {{ ms.game_name or 'N/A' }}</p>
             <p class="status-{{ ms.status }}">{{ ms.status }}</p>
             <p>Created: {{ ms.created_at.strftime('%Y-%m-%d') if ms.created_at else '-' }}</p>
             {% if ms.status == 'active' %}

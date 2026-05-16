@@ -15,7 +15,7 @@
         {% for ffa in ffAs %}
             <div class="ffa-card">
                 <h3><a href="/ffa/{{ ffa.id }}">{{ ffa.name }}</a></h3>
-                <p class="ffa-game">{{ ffa.game.name if ffa.game else 'No game' }}</p>
+                <p class="ffa-game">{{ ffa.game_name or 'No game' }}</p>
                 <p class="ffa-status status-{{ ffa.status }}">{{ ffa.status }}</p>
                 <p class="ffa-date">Created: {{ ffa.created_at.strftime('%Y-%m-%d') }}</p>
                 <p class="ffa-players">{{ ffa.players|length }} players</p>

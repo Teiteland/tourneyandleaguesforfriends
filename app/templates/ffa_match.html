@@ -13,7 +13,7 @@
 <div class="ffa-status">
     <p>Status: <span class="status-{{ ffa.status }}">{{ ffa.status }}</span></p>
     {% if ffa.game %}
-    <p>Game: {{ ffa.game.name }}</p>
+    <p>Game: {{ ffa.game_name or 'N/A' }}</p>
     {% endif %}
     {% if ffa.played_at %}
     <p>Played: {{ ffa.played_at.strftime('%Y-%m-%d') }}</p>

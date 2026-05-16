@@ -13,15 +13,6 @@ class User(db.Model):
     failed_login_attempts = db.Column(db.Integer, default=0)
     is_locked = db.Column(db.Boolean, default=False)
 
-class Game(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    platform = db.Column(db.String(50), nullable=True)
-    max_players = db.Column(db.Integer, nullable=True)
-    allow_tournament = db.Column(db.Boolean, default=True)
-    allow_league = db.Column(db.Boolean, default=True)
-    is_active = db.Column(db.Boolean, default=True)
-
 class Player(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -30,7 +21,7 @@ class Player(db.Model):
 class League(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
+    game_name = db.Column(db.String(100), nullable=True)
     format = db.Column(db.String(20), default='round_robin')  # round_robin, ffa
     num_rounds = db.Column(db.Integer, default=1)
     status = db.Column(db.String(20), default='active')
@@ -38,7 +29,6 @@ class League(db.Model):
     ended_at = db.Column(db.DateTime, nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     unique_id = db.Column(db.String(20), unique=True, nullable=True)
-    game = db.relationship('Game', backref='leagues')
     owner = db.relationship('User', backref='owned_leagues')
 
 class LeagueRound(db.Model):
@@ -72,7 +62,7 @@ class Match(db.Model):
 class Tournament(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'))
+    game_name = db.Column(db.String(100), nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     unique_id = db.Column(db.String(20), unique=True, nullable=True)
     format = db.Column(db.String(20), default='single_elimination')  # single_elimination, double_elimination
@@ -81,7 +71,6 @@ class Tournament(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     started_at = db.Column(db.DateTime, nullable=True)
     ended_at = db.Column(db.DateTime, nullable=True)
-    game = db.relationship('Game', backref='tournaments')
     owner = db.relationship('User', backref='owned_tournaments')
 
 class TournamentPlayer(db.Model):
@@ -121,13 +110,12 @@ class FFAMatch(db.Model):
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'), nullable=True)
     name = db.Column(db.String(100), nullable=False)
     round_number = db.Column(db.Integer, nullable=True)  # Associated round number when created in a league
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
+    game_name = db.Column(db.String(100), nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     status = db.Column(db.String(20), default='draft')  # draft, active, completed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     played_at = db.Column(db.DateTime, nullable=True)
     league = db.relationship('League', backref='ffa_matches')
-    game = db.relationship('Game', backref='ffa_matches')
     owner = db.relationship('User', backref='owned_ffas')
 
 class FFAPlayer(db.Model):
@@ -144,13 +132,12 @@ class MassStart(db.Model):
     league_id = db.Column(db.Integer, db.ForeignKey('league.id'), nullable=True)
     name = db.Column(db.String(100), nullable=False)
     round_number = db.Column(db.Integer, nullable=True)  # Associated round number when created in a league
-    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=True)
+    game_name = db.Column(db.String(100), nullable=True)
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     status = db.Column(db.String(20), default='draft')  # draft, active, completed
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     played_at = db.Column(db.DateTime, nullable=True)
     league = db.relationship('League', backref='mass_starts')
-    game = db.relationship('Game', backref='mass_starts')
     owner = db.relationship('User', backref='owned_mass_starts')
 
 class MassStartPlayer(db.Model):

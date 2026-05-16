@@ -5,7 +5,7 @@
 {% block content %}
 <div class="page-header">
     <h2>{{ league.name }}</h2>
-    <p class="league-game">Game: {{ league.game.name if league.game else 'N/A' }}</p>
+    <p class="league-game">Game: {{ league.game_name or 'N/A' }}</p>
     <p class="league-status status-{{ league.status }}">{{ league.status }}</p>
     <p class="league-format">Format: {{ 'Free For All' if is_ffa_league else 'Round Robin' }}</p>
     {% if league.owner %}

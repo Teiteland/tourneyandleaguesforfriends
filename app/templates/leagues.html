@@ -15,7 +15,7 @@
         {% for league in leagues %}
             <div class="league-card">
                 <h3><a href="/leagues/{{ league.id }}">{{ league.name }}</a></h3>
-                <p class="league-game">{{ league.game.name if league.game else 'No game' }}</p>
+                <p class="league-game">{{ league.game_name or 'No game' }}</p>
                 <p class="league-format">{{ 'FFA' if league.format == 'ffa' else 'Round Robin' }}</p>
                 <p class="league-status status-{{ league.status }}">{{ league.status }}</p>
                 <p class="league-date">Created: {{ league.created_at.strftime('%Y-%m-%d') }}</p>

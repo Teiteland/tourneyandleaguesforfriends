@@ -1,7 +1,7 @@
 import click
 from flask import Flask
 from flask.cli import with_appcontext
-from app.models.models import db, Player, Game, User
+from app.models.models import db, Player, User
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 
@@ -9,12 +9,6 @@ DUMMY_PLAYERS = [
     'Mario', 'Luigi', 'Peach', 'Daisy',
     'Toad', 'Yoshi', 'Shy Guy', 'Donkey Kong',
     'Wario', 'Waluigi', 'Bowser', 'Bowser Jr.'
-]
-
-DEFAULT_GAMES = [
-    {'name': 'Mario Kart 8 Deluxe', 'platform': 'Nintendo Switch', 'max_players': 12, 'allow_tournament': True, 'allow_league': True},
-    {'name': 'Mario Kart 8', 'platform': 'Nintendo Switch', 'max_players': 12, 'allow_tournament': True, 'allow_league': True},
-    {'name': 'Mario Kart World', 'platform': 'Nintendo Switch 2', 'max_players': 24, 'allow_tournament': True, 'allow_league': True}
 ]
 
 @click.command('init-db')
@@ -28,14 +22,8 @@ def init_db():
             player = Player(name=player_name, is_dummy=True)
             db.session.add(player)
     
-    for game_data in DEFAULT_GAMES:
-        existing = Game.query.filter_by(name=game_data['name']).first()
-        if not existing:
-            game = Game(**game_data)
-            db.session.add(game)
-    
     db.session.commit()
-    click.echo('Database initialized with dummy players and games.')
+    click.echo('Database initialized with dummy players.')
 
 @click.command('create-admin')
 @with_appcontext
@@ -69,14 +57,9 @@ def create_admin():
 def seed_data():
     from app.models.models import League, LeagueRound, Match
     players = Player.query.all()
-    game = Game.query.first()
     test_user = User.query.filter_by(email='bruker@example.com').first()
     
-    if not game:
-        click.echo('No game found. Run init-db first.')
-        return
-    
-    league = League(name='Test League - Season 1', game_id=game.id, owner_id=test_user.id if test_user else None)
+    league = League(name='Test League - Season 1', game_name='Mario Kart 8 Deluxe', owner_id=test_user.id if test_user else None)
     db.session.add(league)
     db.session.flush()
     
@@ -190,7 +173,7 @@ def seed_data():
     db.session.add(match12)
     
     # Season 2 (completed)
-    league2 = League(name='Test League - Season 2', game_id=game.id, status='completed', owner_id=test_user.id if test_user else None)
+    league2 = League(name='Test League - Season 2', game_name='Mario Kart 8 Deluxe', status='completed', owner_id=test_user.id if test_user else None)
     db.session.add(league2)
     db.session.flush()
     

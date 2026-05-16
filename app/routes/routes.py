@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from app.models.models import db, League, LeagueRound, Match, Player, Game, User, Tournament, TournamentMatch, TournamentPlayer, FFAMatch, FFAPlayer, MassStart, MassStartPlayer, LeagueJoinRequest, TournamentJoinRequest
+from app.models.models import db, League, LeagueRound, Match, Player, User, Tournament, TournamentMatch, TournamentPlayer, FFAMatch, FFAPlayer, MassStart, MassStartPlayer, LeagueJoinRequest, TournamentJoinRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 import uuid
@@ -263,86 +263,6 @@ def admin_reset_password(user_id):
     flash(f'Password for {user.username} has been reset', 'success')
     return redirect(url_for('main.admin_users'))
 
-@main.route('/admin/games')
-def admin_games():
-    if not session.get('is_admin'):
-        flash('Admin access required', 'error')
-        return redirect(url_for('main.index'))
-    
-    games = Game.query.order_by(Game.name).all()
-    return render_template('admin_games.html', games=games)
-
-@main.route('/admin/games/create', methods=['GET', 'POST'])
-def admin_create_game():
-    if not session.get('is_admin'):
-        flash('Admin access required', 'error')
-        return redirect(url_for('main.index'))
-    
-    if request.method == 'POST':
-        name = request.form.get('name')
-        platform = request.form.get('platform')
-        other_platform = request.form.get('other_platform')
-        max_players = request.form.get('max_players')
-        allow_tournament = request.form.get('allow_tournament') == 'on'
-        allow_league = request.form.get('allow_league') == 'on'
-        
-        if not name:
-            flash('Game name is required', 'error')
-            return redirect(url_for('main.admin_games'))
-        
-        if platform == 'other' and other_platform:
-            platform = other_platform
-        
-        game = Game(
-            name=name,
-            platform=platform if platform else None,
-            max_players=int(max_players) if max_players else None,
-            allow_tournament=allow_tournament,
-            allow_league=allow_league
-        )
-        db.session.add(game)
-        db.session.commit()
-        flash(f'Game "{name}" created successfully!', 'success')
-        return redirect(url_for('main.admin_games'))
-    
-    return render_template('admin_create_game.html')
-
-@main.route('/admin/games/delete/<int:game_id>', methods=['POST'])
-def admin_delete_game(game_id):
-    if not session.get('is_admin'):
-        flash('Admin access required', 'error')
-        return redirect(url_for('main.index'))
-    
-    game = Game.query.get_or_404(game_id)
-    game_name = game.name
-    
-    if game.leagues or game.tournaments:
-        game.is_active = False
-        db.session.commit()
-        flash(f'Game "{game_name}" has been deactivated (in use)', 'success')
-    else:
-        db.session.delete(game)
-        db.session.commit()
-        flash(f'Game "{game_name}" has been deleted', 'success')
-    
-    return redirect(url_for('main.admin_games'))
-
-@main.route('/games')
-def games():
-    if not session.get('user_id'):
-        flash('Please log in to view games', 'error')
-        return redirect(url_for('main.login'))
-    
-    is_admin = session.get('is_admin')
-    show_all = request.args.get('show_all') == 'true'
-    
-    if is_admin and show_all:
-        all_games = Game.query.order_by(Game.name).all()
-    else:
-        all_games = Game.query.filter_by(is_active=True).order_by(Game.name).all()
-    
-    return render_template('games.html', games=all_games, is_admin=is_admin, show_all=show_all)
-
 @main.route('/my-events')
 def my_events():
     if not session.get('user_id'):
@@ -372,33 +292,30 @@ def create_league():
         flash('Please log in to create a league', 'error')
         return redirect(url_for('main.login'))
     
-    games = Game.query.filter_by(allow_league=True, is_active=True).all()
     players = Player.query.all()
-    
-    pre_selected_game = request.args.get('game_id')
     
     if request.method == 'POST':
         name = request.form.get('name')
-        game_id = request.form.get('game_id')
+        game_name = request.form.get('game_name') or None
         league_format = request.form.get('format', 'round_robin')
         num_rounds = int(request.form.get('num_rounds', 1))
         selected_players = request.form.getlist('players')
         
-        if not name or not game_id:
-            flash('Name and game are required', 'error')
-            return render_template('create_league.html', games=games, players=players)
+        if not name:
+            flash('League name is required', 'error')
+            return render_template('create_league.html', players=players)
         
         if league_format == 'ffa' and len(selected_players) < 2:
             flash('FFA league requires at least 2 players', 'error')
-            return render_template('create_league.html', games=games, players=players)
+            return render_template('create_league.html', players=players)
         
         if league_format == 'ffa' and (num_rounds < 1 or num_rounds > 99):
             flash('Number of rounds must be between 1 and 99', 'error')
-            return render_template('create_league.html', games=games, players=players)
+            return render_template('create_league.html', players=players)
         
         league = League(
             name=name,
-            game_id=game_id,
+            game_name=game_name,
             format=league_format,
             num_rounds=num_rounds,
             owner_id=session['user_id'],
@@ -416,7 +333,7 @@ def create_league():
         flash(f'League "{name}" created successfully!', 'success')
         return redirect(url_for('main.league', league_id=league.id))
     
-    return render_template('create_league.html', games=games, players=players, pre_selected_game=pre_selected_game)
+    return render_template('create_league.html', players=players)
 
 @main.route('/leagues/<int:league_id>')
 def league(league_id):
@@ -1170,7 +1087,7 @@ def generate_ffa_rounds(league, num_rounds, player_ids):
             league_id=league.id,
             round_number=round_num + 1,
             name=f'Round {round_num + 1}',
-            game_id=league.game_id,
+            game_name=league.game_name,
             status='draft'
         )
         db.session.add(ffa)
@@ -1293,29 +1210,26 @@ def create_tournament():
         flash('Please log in to create a tournament', 'error')
         return redirect(url_for('main.login'))
     
-    games = Game.query.filter_by(allow_tournament=True, is_active=True).all()
     players = Player.query.all()
-    
-    pre_selected_game = request.args.get('game_id')
     
     if request.method == 'POST':
         name = request.form.get('name')
-        game_id = request.form.get('game_id')
+        game_name = request.form.get('game_name') or None
         format_type = request.form.get('format')
         best_of = request.form.get('best_of')
         selected_players = request.form.getlist('players')
         
-        if not name or not game_id or not format_type:
-            flash('Name, game, and format are required', 'error')
-            return render_template('create_tournament.html', games=games, players=players)
+        if not name or not format_type:
+            flash('Name and format are required', 'error')
+            return render_template('create_tournament.html', players=players)
         
         if len(selected_players) < 2:
             flash('At least 2 players are required', 'error')
-            return render_template('create_tournament.html', games=games, players=players)
+            return render_template('create_tournament.html', players=players)
         
         tournament = Tournament(
             name=name,
-            game_id=game_id,
+            game_name=game_name,
             owner_id=session['user_id'],
             unique_id=uuid.uuid4().hex[:12],
             format=format_type,
@@ -1336,7 +1250,7 @@ def create_tournament():
         flash(f'Tournament "{name}" created successfully!', 'success')
         return redirect(url_for('main.tournament', tournament_id=tournament.id))
     
-    return render_template('create_tournament.html', games=games, players=players, pre_selected_game=pre_selected_game)
+    return render_template('create_tournament.html', players=players)
 
 @main.route('/tournaments/<int:tournament_id>')
 def tournament(tournament_id):
@@ -1813,7 +1727,6 @@ def create_ffa_in_league(league_id):
         return redirect(url_for('main.league', league_id=league_id))
     
     league = League.query.get_or_404(league_id)
-    games = Game.query.filter_by(allow_league=True, is_active=True).all()
     players = Player.query.all()
     
     # Find the next available round number
@@ -1826,16 +1739,16 @@ def create_ffa_in_league(league_id):
     
     if request.method == 'POST':
         name = request.form.get('name')
-        game_id = request.form.get('game_id')
+        game_name = request.form.get('game_name') or None
         selected_players = request.form.getlist('players')
         
-        if not name or not game_id:
-            flash('Name and game are required', 'error')
-            return render_template('create_ffa.html', league=league, games=games, players=players)
+        if not name:
+            flash('Name is required', 'error')
+            return render_template('create_ffa.html', league=league, players=players)
         
         if len(selected_players) < 2:
             flash('At least 2 players required', 'error')
-            return render_template('create_ffa.html', league=league, games=games, players=players)
+            return render_template('create_ffa.html', league=league, players=players)
         
         # Check for existing name in this round and auto-suffix if needed
         base_name = name
@@ -1854,7 +1767,7 @@ def create_ffa_in_league(league_id):
             league_id=league_id,
             round_number=next_round,
             name=final_name,
-            game_id=game_id,
+            game_name=game_name,
             status='active'
         )
         db.session.add(ffa)
@@ -1871,7 +1784,7 @@ def create_ffa_in_league(league_id):
         flash(f'FFA match "{final_name}" created!', 'success')
         return redirect(url_for('main.league', league_id=league_id))
     
-    return render_template('create_ffa.html', league=league, games=games, players=players)
+    return render_template('create_ffa.html', league=league, players=players)
 
 @main.route('/ffa/create', methods=['GET', 'POST'])
 def create_ffa():
@@ -1879,26 +1792,25 @@ def create_ffa():
         flash('Please log in to create FFA', 'error')
         return redirect(url_for('main.login'))
     
-    games = Game.query.filter_by(is_active=True).all()
     players = Player.query.all()
     
     if request.method == 'POST':
         name = request.form.get('name')
-        game_id = request.form.get('game_id')
+        game_name = request.form.get('game_name') or None
         selected_players = request.form.getlist('players')
         
-        if not name or not game_id:
-            flash('Name and game are required', 'error')
-            return render_template('create_ffa.html', games=games, players=players)
+        if not name:
+            flash('Name is required', 'error')
+            return render_template('create_ffa.html', players=players)
         
         if len(selected_players) < 2:
             flash('At least 2 players required', 'error')
-            return render_template('create_ffa.html', games=games, players=players)
+            return render_template('create_ffa.html', players=players)
         
         ffa = FFAMatch(
             league_id=None,
             name=name,
-            game_id=game_id,
+            game_name=game_name,
             owner_id=session['user_id'],
             status='active'
         )
@@ -1916,7 +1828,7 @@ def create_ffa():
         flash(f'FFA "{name}" created!', 'success')
         return redirect(url_for('main.ffa_match', ffa_id=ffa.id))
     
-    return render_template('create_ffa.html', games=games, players=players)
+    return render_template('create_ffa.html', players=players)
 
 @main.route('/ffa')
 def ffa_list():
@@ -1985,7 +1897,6 @@ def create_mass_start_in_league(league_id):
         return redirect(url_for('main.league', league_id=league_id))
     
     league = League.query.get_or_404(league_id)
-    games = Game.query.filter_by(allow_league=True, is_active=True).all()
     players = Player.query.all()
     
     # Find the next available round number
@@ -1998,16 +1909,16 @@ def create_mass_start_in_league(league_id):
     
     if request.method == 'POST':
         name = request.form.get('name')
-        game_id = request.form.get('game_id')
+        game_name = request.form.get('game_name') or None
         selected_players = request.form.getlist('players')
         
-        if not name or not game_id:
-            flash('Name and game are required', 'error')
-            return render_template('create_mass_start.html', league=league, games=games, players=players)
+        if not name:
+            flash('Name is required', 'error')
+            return render_template('create_mass_start.html', league=league, players=players)
         
         if len(selected_players) < 2:
             flash('At least 2 players required', 'error')
-            return render_template('create_mass_start.html', league=league, games=games, players=players)
+            return render_template('create_mass_start.html', league=league, players=players)
         
         # Check for existing name in this round and auto-suffix if needed
         base_name = name
@@ -2026,7 +1937,7 @@ def create_mass_start_in_league(league_id):
             league_id=league_id,
             round_number=next_round,
             name=final_name,
-            game_id=game_id,
+            game_name=game_name,
             status='active'
         )
         db.session.add(ms)
@@ -2043,7 +1954,7 @@ def create_mass_start_in_league(league_id):
         flash(f'Mass Start "{final_name}" created!', 'success')
         return redirect(url_for('main.mass_start', mass_start_id=ms.id))
     
-    return render_template('create_mass_start.html', league=league, games=games, players=players)
+    return render_template('create_mass_start.html', league=league, players=players)
 
 @main.route('/mass-start/create', methods=['GET', 'POST'])
 def create_mass_start():
@@ -2051,25 +1962,24 @@ def create_mass_start():
         flash('Please log in to create a Mass Start', 'error')
         return redirect(url_for('main.login'))
     
-    games = Game.query.filter_by(allow_league=True, is_active=True).all()
     players = Player.query.all()
     
     if request.method == 'POST':
         name = request.form.get('name')
-        game_id = request.form.get('game_id')
+        game_name = request.form.get('game_name') or None
         selected_players = request.form.getlist('players')
         
-        if not name or not game_id:
-            flash('Name and game are required', 'error')
-            return render_template('create_mass_start.html', league=None, games=games, players=players)
+        if not name:
+            flash('Name is required', 'error')
+            return render_template('create_mass_start.html', league=None, players=players)
         
         if len(selected_players) < 2:
             flash('At least 2 players required', 'error')
-            return render_template('create_mass_start.html', league=None, games=games, players=players)
+            return render_template('create_mass_start.html', league=None, players=players)
         
         ms = MassStart(
             name=name,
-            game_id=game_id,
+            game_name=game_name,
             owner_id=session['user_id'],
             status='active'
         )
@@ -2087,7 +1997,7 @@ def create_mass_start():
         flash(f'Mass Start "{name}" created!', 'success')
         return redirect(url_for('main.mass_start', mass_start_id=ms.id))
     
-    return render_template('create_mass_start.html', league=None, games=games, players=players)
+    return render_template('create_mass_start.html', league=None, players=players)
 
 @main.route('/mass-start')
 def mass_start_list():
