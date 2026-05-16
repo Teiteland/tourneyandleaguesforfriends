@@ -160,6 +160,11 @@ def profile():
         return redirect(url_for('main.login'))
     
     user = User.query.get(session['user_id'])
+    user_id = session['user_id']
+    my_leagues = League.query.filter_by(owner_id=user_id).all()
+    my_tournaments = Tournament.query.filter_by(owner_id=user_id).all()
+    my_ffas = FFAMatch.query.filter_by(owner_id=user_id).all()
+    my_mass_starts = MassStart.query.filter_by(owner_id=user_id).all()
     
     if request.method == 'POST':
         current_password = request.form.get('current_password')
@@ -168,7 +173,7 @@ def profile():
         
         if not check_password_hash(user.password_hash, current_password):
             flash('Current password is incorrect', 'error')
-            return render_template('profile.html', user=user)
+            return render_template('profile.html', user=user, leagues=my_leagues, tournaments=my_tournaments, ffas=my_ffas, mass_starts=my_mass_starts)
         
         errors = []
         
@@ -187,14 +192,14 @@ def profile():
         if errors:
             for error in errors:
                 flash(error, 'error')
-            return render_template('profile.html', user=user)
+            return render_template('profile.html', user=user, leagues=my_leagues, tournaments=my_tournaments, ffas=my_ffas, mass_starts=my_mass_starts)
         
         user.password_hash = generate_password_hash(new_password)
         db.session.commit()
         flash('Password changed successfully!', 'success')
         return redirect(url_for('main.profile'))
     
-    return render_template('profile.html', user=user)
+    return render_template('profile.html', user=user, leagues=my_leagues, tournaments=my_tournaments, ffas=my_ffas, mass_starts=my_mass_starts)
 
 @main.route('/admin/users')
 def admin_users():
@@ -262,24 +267,6 @@ def admin_reset_password(user_id):
     db.session.commit()
     flash(f'Password for {user.username} has been reset', 'success')
     return redirect(url_for('main.admin_users'))
-
-@main.route('/my-events')
-def my_events():
-    if not session.get('user_id'):
-        flash('Please log in to view your events', 'error')
-        return redirect(url_for('main.login'))
-    
-    user_id = session['user_id']
-    my_leagues = League.query.filter_by(owner_id=user_id).all()
-    my_tournaments = Tournament.query.filter_by(owner_id=user_id).all()
-    my_ffas = FFAMatch.query.filter_by(owner_id=user_id).all()
-    my_mass_starts = MassStart.query.filter_by(owner_id=user_id).all()
-    
-    return render_template('my_events.html', 
-                         leagues=my_leagues, 
-                         tournaments=my_tournaments,
-                         ffas=my_ffas,
-                         mass_starts=my_mass_starts)
 
 @main.route('/leagues')
 def leagues():
