@@ -11,6 +11,53 @@ import hashlib
 
 main = Blueprint('main', __name__)
 
+@main.before_request
+def require_login():
+    public_routes = ['index', 'login', 'register', 'webhook']
+    if request.endpoint and request.endpoint.startswith('main.'):
+        endpoint = request.endpoint.split('.', 1)[1]
+        if endpoint not in public_routes and not session.get('user_id'):
+            flash('Please log in to access this page', 'error')
+            return redirect(url_for('main.login'))
+
+def get_accessible_player_ids(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return set()
+    current_player = Player.query.filter_by(name=user.username, is_dummy=False).first()
+    if not current_player:
+        return set()
+
+    ids = {current_player.id}
+
+    for m in Match.query.filter(
+        (Match.home_player_id == current_player.id) |
+        (Match.away_player_id == current_player.id)
+    ).all():
+        ids.add(m.away_player_id if m.home_player_id == current_player.id else m.home_player_id)
+
+    for tm in TournamentMatch.query.filter(
+        (TournamentMatch.player1_id == current_player.id) |
+        (TournamentMatch.player2_id == current_player.id)
+    ).all():
+        ids.add(tm.player2_id if tm.player1_id == current_player.id else tm.player1_id)
+
+    for fp in FFAPlayer.query.filter_by(player_id=current_player.id).all():
+        for sfp in FFAPlayer.query.filter(
+            FFAPlayer.ffa_match_id == fp.ffa_match_id,
+            FFAPlayer.player_id != current_player.id
+        ).all():
+            ids.add(sfp.player_id)
+
+    for mp in MassStartPlayer.query.filter_by(player_id=current_player.id).all():
+        for smp in MassStartPlayer.query.filter(
+            MassStartPlayer.mass_start_id == mp.mass_start_id,
+            MassStartPlayer.player_id != current_player.id
+        ).all():
+            ids.add(smp.player_id)
+
+    return ids
+
 def can_manage_league(league_id):
     """Check if current user can manage the league (admin or owner)."""
     if session.get('is_admin'):
@@ -874,15 +921,16 @@ def players():
     if session.get('is_admin'):
         all_players = Player.query.all()
     else:
-        all_players = Player.query.filter_by(is_dummy=False).all()
+        ids = get_accessible_player_ids(session['user_id'])
+        all_players = Player.query.filter(Player.id.in_(ids)).all() if ids else []
     return render_template('players.html', players=all_players)
 
 @main.route('/players/<int:player_id>')
 def player(player_id):
     player = Player.query.get_or_404(player_id)
     
-    # Hide dummy players from logged-in non-admin users
-    if player.is_dummy and session.get('user_id') and not session.get('is_admin'):
+    # Restrict access: only show players the user has played with/against
+    if not session.get('is_admin') and player_id not in get_accessible_player_ids(session['user_id']):
         flash('Player not found', 'error')
         return redirect(url_for('main.players'))
     
