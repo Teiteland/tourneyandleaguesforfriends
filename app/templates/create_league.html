@@ -2,6 +2,10 @@
 
 {% block title %}Create League - Gaming Tournament & League{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="form-container">
     <h2>Create New League</h2>
@@ -28,13 +32,10 @@
         </div>
         <div class="form-group">
             <label>Select Players (minimum 2)</label>
-            <div class="players-grid">
-                {% for player in players %}
-                    <label class="player-checkbox">
-                        <input type="checkbox" name="players" value="{{ player.id }}">
-                        {{ player.name }}
-                    </label>
-                {% endfor %}
+            <div class="player-selector">
+                <input type="text" class="player-search-input" placeholder="Search players by name...">
+                <div class="player-search-results"></div>
+                <div class="selected-players"></div>
             </div>
         </div>
         <button type="submit" class="btn-primary">Create League</button>
@@ -42,6 +43,7 @@
     </form>
 </div>
 
+<script src="{{ url_for('static', filename='js/player_search.js') }}"></script>
 <script>
 function toggleFormat() {
     const format = document.getElementById('format').value;

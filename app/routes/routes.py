@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from app.models.models import db, League, LeagueRound, Match, Player, User, Tournament, TournamentMatch, TournamentPlayer, FFAMatch, FFAPlayer, MassStart, MassStartPlayer, LeagueJoinRequest, TournamentJoinRequest
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
@@ -914,7 +914,23 @@ def match(league_id, match_id):
     can_manage = can_manage_league(league_id)
     return render_template('match.html', league=league, match=match, 
                            is_completed=is_completed, round_completed=round_completed,
-                           can_manage=can_manage)
+                            can_manage=can_manage)
+
+@main.route('/api/player-search')
+def player_search():
+    q = request.args.get('q', '').strip()
+    if len(q) < 2:
+        return jsonify([])
+    
+    players = Player.query.filter(
+        Player.name.ilike(f'%{q}%')
+    ).limit(10).all()
+    
+    return jsonify([{
+        'id': p.id,
+        'name': p.name,
+        'is_dummy': p.is_dummy
+    } for p in players])
 
 @main.route('/players')
 def players():
