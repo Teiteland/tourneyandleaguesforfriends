@@ -36,26 +36,19 @@
 .env               # Environment variables
 ```
 
-## Phase 1: League System (Implemented)
+## Phase 1: League System
 
 ### Features
 
-1. **Player Management**
-   - Add/remove players from active leagues (after league creation)
-   - Owner or admin can manage players when league is active
-   - Players added to active round as bye matches
-   - Removing player removes all their unplayed matches
-   - 12 auto-generated dummy players from Mario Kart universe on initialization
-   - Player statistics tracked
-
-2. **League/Serie Mode**
-   - Round-robin format: all players play each other twice (home + away)
-   - Home and away matches grouped in the same round
-   - Configurable number of players (start: 12, max: 64)
+1. **League/Serie Mode**
+   - Two formats: Round Robin (1v1) and Free For All (FFA)
+   - Round-robin: all players play each other twice (home + away)
+   - FFA: each round is a FFA match with scoring
+   - Configurable number of players
    - Multiple parallel leagues/seasons
-   - Owner or admin can end league manually even if not all matches played
+   - Owner or admin can end league manually
    - Owner or admin can edit match results while league is active
-   - Points system: 3 for win, 1 for draw, 0 for loss
+   - Points system: 3 for win, 1 for draw, 0 for loss (round-robin)
 
 2. **Match Scheduling**
    - Home player selects track (dropdown or manual entry)
@@ -69,8 +62,7 @@
 3. **Player Management**
    - 12 auto-generated dummy players from Mario Kart universe on initialization
    - Auto-create Player when User registers
-   - Add players mid-league with full round-robin scheduling (home + away) - [DISABLED - see TODO]
-   - Catch-up round: remaining matches placed in final round if no capacity in remaining rounds - [DISABLED - see TODO]
+   - Add players mid-league - [DISABLED - see TODO]
    - Player statistics tracked
 
 4. **Owner System**
@@ -118,17 +110,6 @@
 | failed_login_attempts | INTEGER | Failed login attempts |
 | is_locked | BOOLEAN | Account locked status |
 
-#### Games Table
-| Column | Type | Description |
-|--------|------|-------------|
-| id | INTEGER | Primary key |
-| name | TEXT | Game name |
-| platform | TEXT | Gaming platform |
-| max_players | INTEGER | Max players (null = unlimited) |
-| allow_tournament | BOOLEAN | Allow tournaments |
-| allow_league | BOOLEAN | Allow leagues |
-| is_active | BOOLEAN | Currently playable |
-
 #### Players Table
 | Column | Type | Description |
 |--------|------|-------------|
@@ -142,7 +123,9 @@
 | id | INTEGER | Primary key |
 | name | TEXT | League name |
 | unique_id | TEXT | Unique identifier (12 chars) |
-| game_id | INTEGER | Foreign key to Games |
+| game_name | TEXT | Optional game name (free text) |
+| format | TEXT | round_robin or ffa |
+| num_rounds | INTEGER | Number of rounds (FFA leagues) |
 | owner_id | INTEGER | Foreign key to Users (creator) |
 | status | TEXT | active/completed/archived |
 | created_at | DATETIME | Creation timestamp |
@@ -185,7 +168,7 @@
 11. Bowser
 12. Bowser Jr.
 
-## Phase 2: Authentication (Implemented)
+## Phase 2: Authentication
 
 - User registration with email + password + confirm password
 - Password hashing (bcrypt)
@@ -194,7 +177,7 @@
 - Admin can unlock accounts and reset passwords
 - Users can change their own password
 
-## Phase 3: Tournament System (Implemented)
+## Phase 3: Tournament System
 
 ### Features
 
@@ -205,6 +188,7 @@
    - Recommended: 4, 8, 16, 32, 64 players
    - Grand finals: Best of 1 or Best of 3 (configurable by owner)
    - Owner system: creator + admin can manage
+   - Player selection via autocomplete search
 
 2. **Bracket Generation**
    - Automatic bye handling for odd player counts
@@ -225,7 +209,7 @@
 |--------|------|-------------|
 | id | INTEGER | Primary key |
 | name | TEXT | Tournament name |
-| game_id | INTEGER | Foreign key to Games |
+| game_name | TEXT | Optional game name (free text) |
 | owner_id | INTEGER | Foreign key to Users |
 | unique_id | TEXT | Unique identifier (12 chars) |
 | format | TEXT | single_elimination/double_elimination |
@@ -263,24 +247,30 @@
 | loser_next_match_id | INTEGER | Next match (loser) |
 | played_at | DATETIME | Match timestamp |
 
-## Phase 4: FFA (Free For All) (Implemented)
+## Phase 4: FFA (Free For All)
 
 ### Features
 
 1. **FFA Creation**
-   - Standalone FFA (from main page or My Events)
+   - Standalone FFA from quick-links or Profile
    - FFA within leagues
    - Any number of players (minimum 2)
    - Owner system: creator + admin can manage
+   - Player selection via autocomplete search
 
-2. **FFA Scoring**
-   - 1st place: floor(X/2) points (X = number of players)
-   - All other placements: 1 point
+2. **FFA Scoring (linear)**
+   - 1st place: X points (X = number of players)
+   - 2nd place: X-1 points
+   - 3rd place: X-2 points
+   - ...
+   - Last place: 1 point
 
-3. **FFA Management**
-   - Manual placement entry
-   - Automatic points calculation
-   - Status: draft → active → completed
+3. **FFA League**
+   - Multi-round FFA league
+   - Each round generates FFAMatch entries
+   - Auto-advance: next round activates when current completes
+   - Auto-end: league ends when all rounds complete
+   - Standings aggregate all FFA round points
 
 ### Database Schema
 
@@ -290,7 +280,8 @@
 | id | INTEGER | Primary key |
 | league_id | INTEGER | Foreign key to Leagues (nullable) |
 | name | TEXT | FFA match name |
-| game_id | INTEGER | Foreign key to Games |
+| game_name | TEXT | Optional game name (free text) |
+| round_number | INTEGER | Round number (for FFA leagues) |
 | owner_id | INTEGER | Foreign key to Users |
 | status | TEXT | draft/active/completed |
 | created_at | DATETIME | Creation timestamp |
@@ -305,15 +296,16 @@
 | placement | INTEGER | Final placement |
 | points_earned | INTEGER | Points awarded |
 
-## Phase 4b: Mass Start (Implemented)
+## Phase 4b: Mass Start
 
 ### Features
 
 1. **Mass Start Creation**
-   - Standalone Mass Start (from main page or My Events)
+   - Standalone Mass Start from quick-links or Profile
    - Mass Start within leagues
+   - Player selection via autocomplete search
 
-2. **Mass Start Scoring**
+2. **Mass Start Scoring (linear)**
    - 1st place: X points (X = number of players)
    - 2nd place: X-1 points
    - ...
@@ -333,7 +325,8 @@
 | id | INTEGER | Primary key |
 | league_id | INTEGER | Foreign key to Leagues (nullable) |
 | name | TEXT | Mass Start name |
-| game_id | INTEGER | Foreign key to Games |
+| game_name | TEXT | Optional game name (free text) |
+| round_number | INTEGER | Round number |
 | owner_id | INTEGER | Foreign key to Users |
 | status | TEXT | draft/active/completed |
 | created_at | DATETIME | Creation timestamp |
@@ -349,6 +342,13 @@
 | placement | INTEGER | Final placement (nullable) |
 | points_earned | INTEGER | Points awarded |
 | is_not_finished | BOOLEAN | Did not finish status |
+
+## Navigation / Auth
+
+- All pages except Home require login (via `before_request` handler)
+- Players page shows only players you have played with/against (admin sees all)
+- My Profile (nav link) includes profile info, theme selector, password change, and My Events summary
+- Quick-links on Home: Tournaments, Leagues, FFA, Mass Start
 
 ## TODO (Future Improvements)
 
@@ -399,32 +399,11 @@ flask seed-data
 
 ```
 FLASK_APP=app
-FLASK_ENV=development
 SECRET_KEY=your-secret-key
 DATABASE_URI=sqlite:///gaming_liga.db
+WEBHOOK_SECRET=your-webhook-secret
 ```
 
-## Deployment (Render)
+## Deployment
 
-### Quick Deploy
-
-1. Push to GitHub
-2. Create Web Service on Render.com
-3. Set Environment Variables:
-   - `SECRET_KEY` = random string
-   - `DATABASE_URI` = (leave empty - Render provides PostgreSQL)
-4. Deploy automatically triggers
-
-### Auto-Init
-
-The Procfile runs these commands on each deploy:
-- `flask create-admin` - Creates admin user (even.teigland@gmail.com / admin123)
-- `flask seed-data` - Adds test data
-
-### Manual Commands (if needed)
-
-```bash
-# Run migrations
-flask db migrate -m "description"
-flask db upgrade
-```
+See README.md for current deployment setup (Cloudflare Tunnel + systemd).

@@ -1903,12 +1903,9 @@ def ffa_match(ffa_id):
             placement = request.form.get(placement_key)
             if placement:
                 fp.placement = int(placement)
-                # Poengberegning: 1. plass får floor(X/2), alle andre får 1 poeng
+                # Poengberegning: lineær fordeling, 1. plass får X poeng, 2. får X-1, ..., siste får 1
                 player_count = len(ffa_players)
-                if fp.placement == 1:
-                    fp.points_earned = player_count // 2
-                else:
-                    fp.points_earned = 1
+                fp.points_earned = player_count - fp.placement + 1
         
         ffa.status = 'completed'
         ffa.played_at = datetime.utcnow()

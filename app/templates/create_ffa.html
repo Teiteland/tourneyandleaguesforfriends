@@ -5,7 +5,7 @@
 {% block content %}
 <div class="form-container">
     <h2>Create FFA{% if league %} in {{ league.name }}{% endif %}</h2>
-    <p>FFA (Free For All) - Alle spillere konkurrerer, vinneren får {{ 'floor(X/2)' }} poeng, alle andre får 1 poeng.</p>
+    <p>FFA (Free For All) - Alle spillere konkurrerer. 1. plass får X poeng (X = antall spillere), 2. plass får X-1, ..., siste får 1 poeng.</p>
     
     <form method="POST">
         <div class="form-group">
